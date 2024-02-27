@@ -27,7 +27,7 @@ export const getFriendById = async (request: AuthRequest, response: Response) =>
     try {
         const { user } = request
 
-        const friends = await Friend.find({
+        const friend = await Friend.find({
             $and: [
              { status: 'APPROVED' },
              {
@@ -38,7 +38,7 @@ export const getFriendById = async (request: AuthRequest, response: Response) =>
             }]
         })
     } catch (error) {
-        console.log("error in getAllFriends ", error)
+        console.log("error in getFriendById ", error)
         throw error
     }
 }
