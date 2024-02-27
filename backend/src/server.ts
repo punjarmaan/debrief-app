@@ -3,6 +3,7 @@ import connectToDB from './db'
 import userRoutes from './routers/user.route';
 import eventRoutes from './routers/event.route'
 import authUserRoutes from './routers/auth-user.route'
+import friendRoutes from './routers/friend.route';
 
 const app = express()
 app.use(express.json())
@@ -19,6 +20,7 @@ app.get("/", (request: Request, response: Response) => {
 app.use("/api/user", userRoutes)
 app.use("/api/events", eventRoutes)
 app.use("/api/auth-user", authUserRoutes)
+app.use("/api/friends", friendRoutes)
 
 app.listen(PORT, () => {
     console.log(PORT + " is listening!")

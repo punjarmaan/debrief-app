@@ -7,11 +7,42 @@ export const getAllEvents = async (request: AuthRequest, response: Response) => 
     try {
         const { user } = request
         const events = await Event.find({
-            creator_id: user
+            $or: [{
+                creator_id: user
+            }, {
+                members: user
+            }]
         })
         response.status(200).send(events)
     } catch (error) {
         console.log("error in getAllEvents ", error)
+        throw error
+    }
+}
+
+export const getEventById = async (request: AuthRequest, response: Response) => {
+    try {
+        const { user } = request
+        const { id } = request.params
+
+        const event = await Event.find({
+            $and: [{
+                 _id: id 
+            }, {
+                $or: [
+                    { creator_id: user},
+                    { members: user }
+                ]
+            }]
+        })
+
+        if (event) {
+            response.status(200).send(event)  
+        } else {
+            response.status(401).send("Event doesn't exist or unauthorized action.")
+        }
+    } catch (error) {
+        console.log("error in getEventById ", error)
         throw error
     }
 }
@@ -71,6 +102,7 @@ export const updateEvent = async (request: AuthRequest, response: Response) => {
             title
          }
         })
+
         response.send({ message: "Event updated successfully."})
     } catch (error) {
         console.log("error in updateEvent ", error)
@@ -89,11 +121,32 @@ export const uploadTest = async (request: AuthRequest, response: Response) => {
     }
 }
 
-// const getAllEvents = async (request: AuthRequest, response: Response) => {
-    // try {
+export const addEventMember = async (request: AuthRequest, response: Response) => {
+    try {
+        const { user } = request
+        const { id, new_mem_id } = request.body
 
-    // } catch (error) {
-    //     console.log("error in getAllEvents ", error)
-    //     throw error
-    // }
+        await Event.updateOne(
+            { 
+                _id: id 
+            },
+            {
+                $push: {
+                    members: new_mem_id
+                }
+            }        
+        )
+    } catch (error) {
+        console.log("error in addEventMember ", error)
+        throw error
+    }
+}
+
+// const getAllEvents = async (request: AuthRequest, response: Response) => {
+//     try {
+
+//     } catch (error) {
+//         console.log("error in getAllEvents ", error)
+//         throw error
+//     }
 // }
