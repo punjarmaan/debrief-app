@@ -23,11 +23,11 @@ export const getAllEvents = async (request: AuthRequest, response: Response) => 
 export const getEventById = async (request: AuthRequest, response: Response) => {
     try {
         const { user } = request
-        const { id } = request.params
+        const { event_id } = request.params
 
         const event = await Event.find({
             $and: [{
-                 _id: id 
+                 _id: event_id 
             }, {
                 $or: [
                     { creator_id: user},
@@ -66,10 +66,10 @@ export const createEvent = async (request: AuthRequest, response: Response) => {
 
 export const deleteEvent = async (request: AuthRequest, response: Response) => {
     try {
-        const { id } = request.params
+        const { event_id } = request.params
         const { user } = request
 
-        const eventToDelete = await Event.findById(id)
+        const eventToDelete = await Event.findById(event_id)
 
         if (!eventToDelete) {
             response.status(404).send({ message: "Event does not exist." })
@@ -78,11 +78,9 @@ export const deleteEvent = async (request: AuthRequest, response: Response) => {
         }
 
         await Event.deleteOne({
-            _id: id
-        }).then(() => {
-            response.status(204).send({ message: "Event deleted by creator."})
+            _id: event_id
         })
-
+        response.status(204).send({ message: "Event deleted by creator."})
     } catch (error) {
         console.log("error in getAllEvents ", error)
         throw error
@@ -91,19 +89,18 @@ export const deleteEvent = async (request: AuthRequest, response: Response) => {
 
 export const updateEvent = async (request: AuthRequest, response: Response) => {
     try {
-        const { _id, title }: EventProfile = request.body
+        const { title }: EventProfile = request.body
+        const { event_id } = request.params
         const { user } = request
 
         await Event.updateOne({
-            _id
+            _id: event_id
         }, 
         {
          $set: {
             title
-         }
-        })
-
-        response.send({ message: "Event updated successfully."})
+         }})
+        response.send({ message: "Event updated successfully."}) 
     } catch (error) {
         console.log("error in updateEvent ", error)
         throw error
@@ -124,7 +121,8 @@ export const uploadTest = async (request: AuthRequest, response: Response) => {
 export const addEventMember = async (request: AuthRequest, response: Response) => {
     try {
         const { user } = request
-        const { id, new_mem_id } = request.body
+        const { id } = request.params
+        const { new_mem_id } = request.body
 
         await Event.updateOne(
             { 
@@ -134,10 +132,34 @@ export const addEventMember = async (request: AuthRequest, response: Response) =
                 $push: {
                     members: new_mem_id
                 }
-            }        
-        )
+        })
+        
+        response.send({ message: "New event member added: ", new_mem_id })
     } catch (error) {
         console.log("error in addEventMember ", error)
+        throw error
+    }
+}
+
+export const deleteEventMember = async (request: AuthRequest, response: Response) => {
+    try {
+        const { user } = request
+        const { id } = request.params
+        const { del_mem_id } = request.body
+
+        await Event.updateOne(
+            { 
+                _id: id 
+            },
+            {
+                $pop: {
+                    members: del_mem_id
+                }
+        })
+        
+        response.send({ message: "Event member removed: ", del_mem_id })
+    } catch (error) {
+        console.log("error in deleteEventMember ", error)
         throw error
     }
 }
