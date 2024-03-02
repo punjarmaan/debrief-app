@@ -47,6 +47,10 @@ export const createUser = async (request: Request, response: Response) => {
             phone_number
         })
 
+        if (!user) {
+            response.send({ message: "Error creating user." })
+        }
+
         return response.status(201).send({message: "User created successfully/"})
 
     } catch (error) {
@@ -86,7 +90,7 @@ export const loginUser = async (request: Request, response: Response) => {
                 }
             })
         } else {
-            return response.status(400).send({ message: "the phone number or password is not associated with an account"})
+            return response.status(400).send({ message: "Incorrect password."})
         }
 
     } catch (error) {

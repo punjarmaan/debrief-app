@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllEvents, createEvent, deleteEvent, updateEvent, uploadTest, addEventMember, getEventById } from "../controllers/event.controller";
+import { getAllEvents, createEvent, deleteEvent, updateEvent, uploadTest, addEventMember, getEventById, deleteEventMember } from "../controllers/event.controller";
 import { authenticateMiddleware } from "../middleware/auth";
 
 const eventRoutes = express.Router()
@@ -7,12 +7,18 @@ const eventRoutes = express.Router()
 // All event-related CRUD ops must be authorized
 eventRoutes.use(authenticateMiddleware)
 
+//Individual event-related routes
 eventRoutes.route("/").get(getAllEvents)
-eventRoutes.route("/:id").get(getEventById)
+eventRoutes.route("/:event_id").get(getEventById)
 eventRoutes.route("/create").post(createEvent)
-eventRoutes.route("/delete/:id").delete(deleteEvent)
-eventRoutes.route("/update").put(updateEvent)
+eventRoutes.route("/:event_id").delete(deleteEvent)
+eventRoutes.route("/:event_id").put(updateEvent)
+
+// Image upload to event routes
 eventRoutes.route("/test").post(uploadTest)
-eventRoutes.route("/:id/add").put(addEventMember)
+
+// Member-event relationship routes
+eventRoutes.route("/:event_id/add").put(addEventMember)
+eventRoutes.route("/:event_id/delete").delete(deleteEventMember)
 
 export default eventRoutes
