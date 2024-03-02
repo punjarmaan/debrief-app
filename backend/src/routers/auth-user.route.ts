@@ -7,7 +7,7 @@ const authUserRoutes = express.Router()
 // All user-related update ops must be authorized
 authUserRoutes.use(authenticateMiddleware)
 
-authUserRoutes.route("/edit/:user_id").put(updateProfile)
+authUserRoutes.route("/edit").put(updateProfile)
 authUserRoutes.route("/").get(getAllUsers)
 authUserRoutes.route("/:user_id").get(getUserById)
 

@@ -7,11 +7,10 @@ import User from "../models/user.model";
 export const updateProfile = async (request: AuthRequest, response: Response) => {
     try {
         const { user } = request
-        const { user_id } = request.params
 
-        if (user !== user_id) {
-            return response.status(401).send("Unauthorized edit request.")
-        }
+        // if (user !== user_id) {
+        //     return response.status(401).send("Unauthorized edit request.")
+        // }
 
         const { firstName, lastName, username, phone_extension, phone_number }: UserProfile = request.body
 
@@ -35,7 +34,7 @@ export const updateProfile = async (request: AuthRequest, response: Response) =>
             return response.status(409).send("An account with this phone number already exists.")
         }
 
-        await User.updateOne({
+        const result =await User.updateOne({
             _id: user
         }, 
         {
@@ -48,7 +47,12 @@ export const updateProfile = async (request: AuthRequest, response: Response) =>
          }
         })
 
-        response.send({ message: "Profile updated successfully."})
+        if (result.modifiedCount == 1) {
+            return response.send({ message: "Profile updated successfully."})
+        } 
+        
+        return response.send({ message: "Error updating profile." })
+
     } catch (error) {
         console.log("error in updateProfile ", error)
         throw error
@@ -59,14 +63,18 @@ export const getAllUsers = async (request: AuthRequest, response: Response) => {
     try {
         const { user } = request // doesn't return user sending the request
         const all_users = await User.find({
-            $nin: [{
-                _id: user
-            }]
-        })
+            _id: {
+                $nin: [user]
+            }
+        }).select('-password -phone_extension -phone_number -_id -createdAt -updatedAt -__v')
         
-        response.send(all_users)
+        if (!all_users) {
+            response.send({ message: "Error retrieving users." })
+        }
+        
+        return response.send(all_users)
     } catch (error) {
-        console.log("error in getUserById ", error)
+        console.log("error in getAllUsers ", error)
         throw error
     }
 }
@@ -79,9 +87,9 @@ export const getUserById = async (request: AuthRequest, response: Response) => {
 
         const user_to_find = await User.find({
             _id: user_id
-        })
+        }).select('-password -phone_extension -phone_number -_id -createdAt -updatedAt -__v')
         
-        response.send(user_to_find)
+        return response.send(user_to_find)
     } catch (error) {
         console.log("error in getUserById ", error)
         throw error
