@@ -1,6 +1,11 @@
 import mongoose from "mongoose";
 import Img from "./img.model";
 
+const eventCategories = ["Birthday", "St. Patrick's", "Valentine's", "Party", "Brunch", 
+                        "Lunch", "Dinner", "Adventure", "Night Out", "Bar Night",
+                        "Date Night", "Wedding", "Holiday", "Vacation"
+                        ]
+
 const eventSchema = new mongoose.Schema(
     {
         title: {
@@ -29,6 +34,14 @@ const eventSchema = new mongoose.Schema(
             type: [{
                 type: mongoose.Schema.Types.ObjectId,
                 ref: 'Img'
+            }],
+            required: false,
+            default: []
+        }, 
+        categories: {
+            type: [{
+                type: [String],
+                enum: eventCategories
             }],
             required: false,
             default: []

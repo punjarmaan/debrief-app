@@ -1,4 +1,5 @@
 export interface UserProfile {
+    id: string,
     firstName: string,
     lastName: string,
     username: string,
@@ -13,3 +14,5 @@ export interface EventProfile {
     user: UserProfile | string,
     locked: boolean
 }
+
+
