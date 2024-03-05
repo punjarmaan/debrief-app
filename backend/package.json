@@ -4,8 +4,8 @@
   "description": "",
   "main": "app.js",
   "scripts": {
-    "test": "jest --coverage",
-    "start": "ts-node ./src/server.ts && nodemon ./dist/server.js",
+    "test": "jest --coverage --forceExit --detectOpenHandles --maxWorkers=1",
+    "start": "ts-node ./src/app.ts && nodemon ./dist/app.js",
     "build": "tsc"
   },
   "author": "Armaan Punj",

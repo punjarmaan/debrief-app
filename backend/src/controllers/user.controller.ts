@@ -69,7 +69,7 @@ export const loginUser = async (request: Request, response: Response) => {
         })
 
         if (!userExists) {
-            return response.status(409).send({ message: "User doesn't exist" })
+            return response.status(409).send({ message: "User doesn't exist." })
         }
 
         const passwordMatch = await bcrypt.compare(

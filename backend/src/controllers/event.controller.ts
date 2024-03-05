@@ -1,10 +1,8 @@
-import { Request, Response } from "express";
+import { Response } from "express";
 import Event from "../models/event.model";
 import { EventProfile } from "../types";
 import { AuthRequest } from "../middleware/auth";
 import User from "../models/user.model";
-import { ObjectId } from "mongodb";
-import { resourceLimits } from "worker_threads";
 
 
 export const getAllEvents = async (request: AuthRequest, response: Response) => {
@@ -12,8 +10,6 @@ export const getAllEvents = async (request: AuthRequest, response: Response) => 
         const { user } = request
         const events = await Event.find({
             $or: [{
-                creator_id: user
-            }, {
                 members: user
             }]
         })
@@ -37,11 +33,14 @@ export const getEventById = async (request: AuthRequest, response: Response) => 
             $and: [{
                  _id: event_id 
             }, {
-                $or: [
-                    { creator_id: user},
-                    { members: user }
-                ]
+                members: user
             }]
+        }).populate({
+            path: 'creator_id',
+            select: 'username firstName lastName _id'
+        }).populate({
+            path: 'members',
+            select: 'username firstName lastName _id'
         })
 
         if (event) {
@@ -103,7 +102,7 @@ export const deleteEvent = async (request: AuthRequest, response: Response) => {
 
 
     } catch (error) {
-        console.log("error in getAllEvents ", error)
+        console.log("error in deleteEvent ", error)
         throw error
     }
 }

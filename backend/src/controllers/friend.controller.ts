@@ -20,8 +20,14 @@ export const getAllFriends = async (request: AuthRequest, response: Response) =>
                     "status": "ACCEPTED"
                 }
             ]
-        }
-        )
+        }).populate({
+            path: 'user_id',
+            select: 'username firstName lastName _id'
+        })
+        .populate({
+            path: 'friend_id',
+            select: 'username firstName lastName _id'
+        })
 
         if (!friends) {
             return response.status(404).send("User friends not found.")
@@ -61,6 +67,13 @@ export const getFriendById = async (request: AuthRequest, response: Response) =>
                 ]
             }
             ]
+        }).populate({
+            path: 'user_id',
+            select: 'username firstName lastName _id'
+        })
+        .populate({
+            path: 'friend_id',
+            select: 'username firstName lastName _id'
         })
 
         if (!friend) {
@@ -118,7 +131,7 @@ export const acceptFriendByFriendshipId = async (request: AuthRequest, response:
             }
         })
 
-        if (!accepted) {
+        if (accepted.modifiedCount != 1) {
             response.send({ message: "Error accepting friend." })
         }
         

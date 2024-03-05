@@ -11,8 +11,15 @@ export interface UserProfile {
 export interface EventProfile {
     _id: string,
     title: string,
-    user: UserProfile | string,
+    user: string,
     locked: boolean
+}
+
+export interface BoxProfile {
+    title: string,
+    user: string,
+    images: string[],
+    is_private: boolean
 }
 
 
