@@ -1,11 +1,11 @@
 import { Response } from "express";
 import Box from "../models/box.model";
 import { BoxProfile } from "../types";
-import { AuthRequest } from "../middleware/auth";
+import { AuthBoxRequest } from "../middleware/box";
 import User from "../models/user.model";
 import Event from "../models/event.model"
 
-export const getAllBoxes = async (request: AuthRequest, response: Response) => {
+export const getAllBoxes = async (request: AuthBoxRequest, response: Response) => {
     try {
         const { user } = request
         const boxes = await Box.find({
@@ -28,23 +28,19 @@ export const getAllBoxes = async (request: AuthRequest, response: Response) => {
     }
 }
 
-export const getBoxById = async (request: AuthRequest, response: Response) => {
+export const getBoxById = async (request: AuthBoxRequest, response: Response) => {
     try {
         const { user } = request
         const { box_id } = request.params
 
-        const box = await Box.find({
-            $and: [{
-                _id: box_id 
-           }, {
-                members: user
-           }]
+        const box = await Box.findById({
+            box_id
         }).populate({
             path: 'events',
             select: 'title images members'
         })
 
-        if (box.length > 0) {
+        if (box) {
             return response.status(200).send(box)  
         } 
         
@@ -55,7 +51,7 @@ export const getBoxById = async (request: AuthRequest, response: Response) => {
     }
 }
 
-export const createBox = async (request: AuthRequest, response: Response) => {
+export const createBox = async (request: AuthBoxRequest, response: Response) => {
     try {
         const { title, is_private }: BoxProfile = request.body
         const { user } = request
@@ -78,7 +74,7 @@ export const createBox = async (request: AuthRequest, response: Response) => {
     }
 }
 
-export const deleteBox = async (request: AuthRequest, response: Response) => {
+export const deleteBox = async (request: AuthBoxRequest, response: Response) => {
     try {
         const { box_id } = request.params
         const { user } = request
@@ -108,7 +104,7 @@ export const deleteBox = async (request: AuthRequest, response: Response) => {
     }
 }
 
-export const updateBox = async (request: AuthRequest, response: Response) => {
+export const updateBox = async (request: AuthBoxRequest, response: Response) => {
     try {
         const { title, is_private}: BoxProfile = request.body
         const { box_id } = request.params
@@ -143,7 +139,7 @@ export const updateBox = async (request: AuthRequest, response: Response) => {
     }
 }
 
-export const addBoxMember = async (request: AuthRequest, response: Response) => {
+export const addBoxMember = async (request: AuthBoxRequest, response: Response) => {
     try {
 
         const { user } = request
@@ -187,7 +183,7 @@ export const addBoxMember = async (request: AuthRequest, response: Response) => 
     }
 }
 
-export const deleteBoxMember = async (request: AuthRequest, response: Response) => {
+export const deleteBoxMember = async (request: AuthBoxRequest, response: Response) => {
     try {
         const { user } = request
         const { box_id } = request.params
@@ -223,7 +219,7 @@ export const deleteBoxMember = async (request: AuthRequest, response: Response) 
     }
 }
 
-export const addExistingEvent = async (request: AuthRequest, response: Response) => {
+export const addExistingEvent = async (request: AuthBoxRequest, response: Response) => {
     try {
         const { user } = request
         const { box_id } = request.params
@@ -260,7 +256,7 @@ export const addExistingEvent = async (request: AuthRequest, response: Response)
 }
 
 
-// export const addNewEvent = async (request: AuthRequest, response: Response) => {
+// export const addNewEvent = async (request: AuthBoxRequest, response: Response) => {
 //     const session = await mongoose.startSession();
 //     session.startTransaction();
 
@@ -310,7 +306,7 @@ export const addExistingEvent = async (request: AuthRequest, response: Response)
 // } 
 
 
-// export const getAllboxs = async (request: AuthRequest, response: Response) => {
+// export const getAllboxs = async (request: AuthBoxRequest, response: Response) => {
 //     try {
 
 //     } catch (error) {

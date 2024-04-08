@@ -1,6 +1,7 @@
 import request from "supertest";
 
-import app from "../../src/app";
+import app from "../../src/server";
+require('dotenv').config();
 
 const PHONE = "410"
 const PASS = "test"
@@ -59,8 +60,9 @@ describe("User Routes", () => {
     }
     const res = await request(app).post("/api/user/login").send(sampleLogin);
 
-    expect(res.body.user.firstName).toEqual("Armaan2");
-    expect(res.body.user.lastName).toEqual("Punj2");
+    expect(res.body.user.firstName).toEqual("Armaan3");
+    expect(res.body.user.lastName).toEqual("Punj3");
+    expect(res.body.user.phone_number).toEqual(PHONE)
   });
 
   it("unsuccessful login - wrong number", async () => {

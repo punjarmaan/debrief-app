@@ -15,11 +15,13 @@ export interface EventProfile {
     locked: boolean
 }
 
+export interface EventInfo {
+    title: string
+}
+
 export interface BoxProfile {
     title: string,
     user: string,
     images: string[],
     is_private: boolean
 }
-
-

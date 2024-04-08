@@ -1,18 +1,17 @@
 import { Response } from "express";
 import Event from "../models/event.model";
 import { EventProfile } from "../types";
-import { AuthRequest } from "../middleware/auth";
+import { AuthEventRequest } from "../middleware/event";
 import User from "../models/user.model";
+import { EventRole } from "../types/event.enum";
 
 
-export const getAllEvents = async (request: AuthRequest, response: Response) => {
+export const getAllEvents = async (request: AuthEventRequest, response: Response) => {
     try {
         const { user } = request
         const events = await Event.find({
-            $or: [{
-                members: user
-            }]
-        })
+            members: user
+        }).select('-createdAt -updatedAt -__v')
 
         if (!events) {
             return response.status(404).send("Error finding events.")
@@ -24,40 +23,37 @@ export const getAllEvents = async (request: AuthRequest, response: Response) => 
     }
 }
 
-export const getEventById = async (request: AuthRequest, response: Response) => {
+export const getEventById = async (request: AuthEventRequest, response: Response) => {
     try {
         const { user } = request
         const { event_id } = request.params
 
-        const event = await Event.find({
-            $and: [{
-                 _id: event_id 
-            }, {
-                members: user
-            }]
+
+        const event = await Event.findById({
+            _id: event_id
         }).populate({
             path: 'creator_id',
             select: 'username firstName lastName _id'
         }).populate({
             path: 'members',
             select: 'username firstName lastName _id'
-        })
+        }).select('-createdAt -updatedAt -__v')
 
-        if (event) {
-            return response.status(200).send(event)  
-        } 
-        
-        return response.status(401).send("Event doesn't exist or unauthorized action.")
+        return response.status(200).send(event)
     } catch (error) {
         console.log("error in getEventById ", error)
         throw error
     }
 }
 
-export const createEvent = async (request: AuthRequest, response: Response) => {
+export const createEvent = async (request: AuthEventRequest, response: Response) => {
     try {
         const { title }: EventProfile = request.body
         const { user } = request
+
+        if (!title) {
+            return response.status(400).send({ message: "Event title is required." })
+        }
         
         const event = await Event.create({
             title: title,
@@ -77,29 +73,26 @@ export const createEvent = async (request: AuthRequest, response: Response) => {
     }
 }
 
-export const deleteEvent = async (request: AuthRequest, response: Response) => {
+export const deleteEvent = async (request: AuthEventRequest, response: Response) => {
     try {
         const { event_id } = request.params
         const { user } = request
+        const { role } = request
 
-        const eventToDelete = await Event.findById(event_id)
+        if (role == EventRole.CREATOR) {
+            const result = await Event.deleteOne({
+                _id: event_id
+            })
 
-        if (!eventToDelete) {
-            return response.status(404).send({ message: "Event does not exist." })
-        } else if (!(eventToDelete.creator_id.toString() === user)) {
-            return response.status(401).send({ message: "Unauthorized deletion: user does not own event "})
+            if (result.deletedCount == 1) {
+                return response.status(200).send({ message: "Event deleted by creator."})
+            }
+
+        } else if (role == EventRole.MEMBER) {
+            return response.status(401).send({ message: "Unauthorized action: user does not own event." })
         }
 
-        const result = await Event.deleteOne({
-            _id: event_id
-        })
-
-        if (result.deletedCount == 1) {
-            return response.status(204).send({ message: "Event deleted by creator."})
-        }
-
-        return response.send({ message: "Error deleting event."})
-
+        return response.status(401).send({ message: "Error deleting event." })
 
     } catch (error) {
         console.log("error in deleteEvent ", error)
@@ -107,33 +100,25 @@ export const deleteEvent = async (request: AuthRequest, response: Response) => {
     }
 }
 
-export const updateEvent = async (request: AuthRequest, response: Response) => {
+export const updateEvent = async (request: AuthEventRequest, response: Response) => {
     try {
         const { title }: EventProfile = request.body
         const { event_id } = request.params
         const { user } = request
-
-        const eventToUpdate = await Event.findById(event_id)
-        const mem_exists = eventToUpdate.members.some(id => id.toString() == user)
-        
-        if (!eventToUpdate) {
-            return response.status(404).send({ message: "Event does not exist." })
-        } else if (!mem_exists) {
-            return response.status(401).send({ message: "Unauthorized action: user does not belong to event." })
-        }
+        const { role } = request
 
         const result = await Event.updateOne({
             _id: event_id
         }, 
         {
-         $set: {
+        $set: {
             title
-         }})
-
+        }})
+    
         if (result.modifiedCount == 1) {
-            return response.send({ message: "Updated event successfully." })
+            return response.status(200).send({ message: "Updated event successfully." })
         }
-        
+
         return response.send({ message: "Error updating event." })
     } catch (error) {
         console.log("error in updateEvent ", error)
@@ -141,7 +126,7 @@ export const updateEvent = async (request: AuthRequest, response: Response) => {
     }
 }
 
-export const uploadTest = async (request: AuthRequest, response: Response) => {
+export const uploadTest = async (request: AuthEventRequest, response: Response) => {
     try {
         console.log("request.body", request.body.title)
         console.log("request.body.binary", request.body.binary)
@@ -152,17 +137,16 @@ export const uploadTest = async (request: AuthRequest, response: Response) => {
     }
 }
 
-export const addEventMember = async (request: AuthRequest, response: Response) => {
+export const addEventMember = async (request: AuthEventRequest, response: Response) => {
     try {
         const { user } = request
         const { event_id } = request.params
         const { new_mem_id } = request.body
 
         const new_mem_exists = await User.findById(new_mem_id)
-        
 
         if (!new_mem_exists) {
-            return response.send({ message: "Member doesn't exist" })
+            return response.status(404).send({ message: "Member doesn't exist." })
         }
 
         const result = await Event.updateOne({ 
@@ -176,8 +160,8 @@ export const addEventMember = async (request: AuthRequest, response: Response) =
         
 
         if (result.modifiedCount == 1) {
-            return response.send({ message: "Member added successfully."})
-        } 
+            return response.status(200).send({ message: "Member added successfully." })
+        }
         
         return response.send({ message: "Error adding member." })
     } catch (error) {
@@ -186,19 +170,15 @@ export const addEventMember = async (request: AuthRequest, response: Response) =
     }
 }
 
-export const deleteEventMember = async (request: AuthRequest, response: Response) => {
+export const deleteEventMember = async (request: AuthEventRequest, response: Response) => {
     try {
         const { user } = request
         const { event_id } = request.params
         const { del_mem_id } = request.body
+        const { role } = request
 
-
-        const event = await Event.findById(event_id)
-
-        if (!event) {
-            return response.status(404).send({ message: "Event does not exist." })
-        } else if (!(event.creator_id.toString() === user)) {
-            return response.status(401).send({ message: "Unauthorized deletion: user does not own event."})
+        if (role != EventRole.CREATOR) {
+            return response.status(401).send({ message: "Unauthorized action: User does not own event." })
         }
 
         const result = await Event.updateOne({ 
@@ -211,19 +191,18 @@ export const deleteEventMember = async (request: AuthRequest, response: Response
         })
 
         if (result.modifiedCount == 1) {
-            return response.send({ message: "Member deleted successfully."})
+            return response.status(200).send({ message: "Member deleted successfully." })
         } 
-        
-        return response.send({ message: "Error deleting member" })
-        
-        return response.send(result)
+    
+        return response.status(401).send({ message: "Error deleting event member." })
+
     } catch (error) {
         console.log("error in deleteEventMember ", error)
         throw error
     }
 }
 
-// export const getAllEvents = async (request: AuthRequest, response: Response) => {
+// export const getAllEvents = async (request: AuthEventRequest, response: Response) => {
 //     try {
 
 //     } catch (error) {

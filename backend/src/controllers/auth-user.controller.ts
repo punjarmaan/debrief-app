@@ -26,12 +26,16 @@ export const updateProfile = async (request: AuthRequest, response: Response) =>
             phone_number
         })
 
+        if (!userProfile) {
+            return response.status(404).send({ message: "User doesn't exist." })
+        }
+
         if (usernameExists && (user !== usernameExists._id.toString())) {
-            return response.status(409).send("Username already exists.")
+            return response.status(409).send({ message: "Username already exists." })
         }
 
         if (phoneNumberExists && (user !== phoneNumberExists._id.toString())) {
-            return response.status(409).send("An account with this phone number already exists.")
+            return response.status(409).send({ message: "Phone number is associated with an existing account." })
         }
 
         const result =await User.updateOne({
@@ -71,8 +75,8 @@ export const getAllUsers = async (request: AuthRequest, response: Response) => {
         if (!all_users) {
             response.send({ message: "Error retrieving users." })
         }
-        
-        return response.send(all_users)
+    
+        return response.status(200).send(all_users)
     } catch (error) {
         console.log("error in getAllUsers ", error)
         throw error
@@ -85,11 +89,15 @@ export const getUserById = async (request: AuthRequest, response: Response) => {
         const { user } = request
         const { user_id } = request.params
 
-        const user_to_find = await User.find({
+        const user_to_find = await User.findById({
             _id: user_id
-        }).select('-password -phone_extension -phone_number -_id -createdAt -updatedAt -__v')
-        
-        return response.send(user_to_find)
+        }).select('-password -phone_extension -phone_number -createdAt -updatedAt -__v')
+
+        if (user_to_find) {
+            return response.status(200).send(user_to_find)
+        }
+
+        return response.status(404).send({ message: "User not found." })
     } catch (error) {
         console.log("error in getUserById ", error)
         throw error

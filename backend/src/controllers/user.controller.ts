@@ -6,8 +6,8 @@ import { Types } from "mongoose";
 import { UserProfile }  from "../types";
 
 const getUserToken = (_id: string | Types.ObjectId) => {
-    const authenticatedToken = jwt.sign({_id}, "express", {
-        expiresIn: "7d"
+    const authenticatedToken = jwt.sign({_id}, process.env.JWT_SECRET, {
+        expiresIn: "100d"
     })
 
     return authenticatedToken
