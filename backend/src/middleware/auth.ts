@@ -8,17 +8,19 @@ export interface AuthRequest extends Request {
 
 export const authenticateMiddleware = async (request: AuthRequest, response: Response, next: NextFunction) => {
     try {
-        const { authorization } = request.headers
-        
-        if (!authorization) {
+        // const { authorization } = request.headers
+        const token = request.headers['authorization'].split(" ")[1]
+
+        if (!token) {
             return response.status(401).json({
                 error: "Unauthorized action"
             })
         }
 
-        const token = authorization
-        const {_id} = jwt.verify(token, "express")
-        const userExists = await User.findOne({ _id })
+        const {_id} = jwt.verify(token, process.env.JWT_SECRET)
+        const userExists = await User.findById({ 
+            _id: _id
+        })
 
         if (userExists) {
             request.user = userExists.id

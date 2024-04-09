@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 import { AuthRequest } from "../middleware/auth";
 import Friend from "../models/friend.model";
+import { FriendStatus } from "../types/friend.enum";
 
 
 export const getAllFriends = async (request: AuthRequest, response: Response) => {
@@ -17,11 +18,17 @@ export const getAllFriends = async (request: AuthRequest, response: Response) =>
                     ]
                 },
                 {
-                    "status": "ACCEPTED"
+                    "status": FriendStatus.ACCEPTED
                 }
             ]
-        }
-        )
+        }).populate({
+            path: 'user_id',
+            select: 'username firstName lastName _id'
+        })
+        .populate({
+            path: 'friend_id',
+            select: 'username firstName lastName _id'
+        })
 
         if (!friends) {
             return response.status(404).send("User friends not found.")
@@ -39,11 +46,13 @@ export const getFriendById = async (request: AuthRequest, response: Response) =>
         const { user } = request
         const { friend_id } = request.params
 
-        if (!friend_id) {"Friend doesn't exist."}
+        if (!friend_id) {
+            return response.status(404).send({ message: "Friend doesn't exist." })
+        }
 
         const friend = await Friend.find({
             $and: [
-             { status: "ACCEPTED" },
+             { status: FriendStatus.ACCEPTED },
              {
                 $or: [
                     {
@@ -61,10 +70,17 @@ export const getFriendById = async (request: AuthRequest, response: Response) =>
                 ]
             }
             ]
+        }).populate({
+            path: 'user_id',
+            select: 'username firstName lastName _id'
+        })
+        .populate({
+            path: 'friend_id',
+            select: 'username firstName lastName _id'
         })
 
         if (!friend) {
-            return response.status(404).send("Friend not found.")
+            return response.status(404).send({ message: "Friend not found." })
         }
 
         return response.send(friend)
@@ -80,13 +96,15 @@ export const addFriend = async (request: AuthRequest, response: Response) => {
         const { user } = request
         const { friend_id } = request.params
 
-        if (!friend_id) {"Friend doesn't exist."}
+        if (!friend_id) {
+            return response.status(404).send({ message: "Friend doesn't exist." })
+        }
         
 
         const friendship = await Friend.create({
             user_id: user,
             friend_id: friend_id,
-            status: "PENDING"
+            status: FriendStatus.PENDING
         })
 
         if (!friendship) {
@@ -107,7 +125,7 @@ export const acceptFriendByFriendshipId = async (request: AuthRequest, response:
 
         if (!friendship_id) { return response.send("Friendship doesn't exist.") }
 
-        const status = "ACCEPTED"
+        const status = FriendStatus.ACCEPTED
 
         const accepted = await Friend.updateOne({
             _id: friendship_id
@@ -118,7 +136,7 @@ export const acceptFriendByFriendshipId = async (request: AuthRequest, response:
             }
         })
 
-        if (!accepted) {
+        if (accepted.modifiedCount != 1) {
             response.send({ message: "Error accepting friend." })
         }
         
@@ -137,7 +155,7 @@ export const acceptFriendByUserId = async (request: AuthRequest, response: Respo
         if (!friend_id) { return response.send("Friendship doesn't exist.") }
 
 
-        const status = "ACCEPTED"
+        const status = FriendStatus.ACCEPTED
         const result = await Friend.updateOne({
             user_id: friend_id,
             friend_id: user
@@ -197,7 +215,7 @@ export const deleteFriendByUserId = async (request: AuthRequest, response: Respo
 
         const frand = friend_id
 
-        const status = "ACCEPTED"
+        const status = FriendStatus.ACCEPTED
         const result = await Friend.deleteOne({ 
                 status 
             },

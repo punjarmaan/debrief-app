@@ -6,8 +6,8 @@ import { Types } from "mongoose";
 import { UserProfile }  from "../types";
 
 const getUserToken = (_id: string | Types.ObjectId) => {
-    const authenticatedToken = jwt.sign({_id}, "express", {
-        expiresIn: "7d"
+    const authenticatedToken = jwt.sign({_id}, process.env.JWT_SECRET, {
+        expiresIn: "100d"
     })
 
     return authenticatedToken
@@ -29,11 +29,11 @@ export const createUser = async (request: Request, response: Response) => {
         })
 
         if (userExists) {
-            return response.status(409).send("user already exists")
+            return response.status(409).send({ error: "User already exists." })
         }
         
-        if (pass === undefined){
-            return response.status(401).send("invalid password")
+        if (!pass || pass.length == 0){
+            return response.status(401).send({ error: "Invalid password." })
         }
         
         const password = await bcrypt.hash(pass, 12)
@@ -51,7 +51,7 @@ export const createUser = async (request: Request, response: Response) => {
             response.send({ message: "Error creating user." })
         }
 
-        return response.status(201).send({message: "User created successfully/"})
+        return response.status(201).send({message: "User created successfully."})
 
     } catch (error) {
         console.log('error in createUser', error);
@@ -62,14 +62,13 @@ export const createUser = async (request: Request, response: Response) => {
 export const loginUser = async (request: Request, response: Response) => {
     try {
         const { phone_number, password }: UserProfile = request.body
-        console.log(phone_number)
-        console.log(password)
+
         const userExists = await User.findOne({
             phone_number
         })
 
         if (!userExists) {
-            return response.status(409).send({ message: "User doesn't exist" })
+            return response.status(409).send({ message: "User doesn't exist." })
         }
 
         const passwordMatch = await bcrypt.compare(
@@ -94,7 +93,6 @@ export const loginUser = async (request: Request, response: Response) => {
         }
 
     } catch (error) {
-        console.log('error in loginUser', error);
-        throw error
+        return response.status(422).send({ error: "Invalid login parameters." })
     }
 }
