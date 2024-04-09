@@ -6,7 +6,8 @@
   "scripts": {
     "test": "cross-env NODE_ENV=TEST jest --coverage --forceExit --detectOpenHandles --maxWorkers=1",
     "start": "cross-env NODE_ENV=LOCAL ts-node ./src/server.ts",
-    "build": "cross-env NODE_ENV=BUILD tsc"
+    "build": "cross-env NODE_ENV=BUILD tsc",
+    "setup": "ts-node ./tests/scripts/initTestData.ts"
   },
   "author": "Armaan Punj",
   "license": "ISC",
