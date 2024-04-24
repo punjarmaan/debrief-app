@@ -1,7 +1,8 @@
-import { NextFunction, Request, Response } from 'express';
+import { NextFunction, Response } from 'express';
 import { AuthRequest } from './auth';
 import Event from "../models/event.model";
 import { EventRole } from '../types/event.enum';
+import mongoose from 'mongoose';
 
 export interface AuthEventRequest extends AuthRequest {
     role: EventRole
@@ -9,9 +10,11 @@ export interface AuthEventRequest extends AuthRequest {
 
 const eventValidation = async (event_id: string) => {
     try {
-        const event = await Event.findById(event_id)
-        return event
-
+        if (mongoose.Types.ObjectId.isValid(event_id)) {
+            return await Event.findById(event_id);
+        } else {
+            return null
+        }
     } catch (error) {
         console.log("error in eventValidation ", error)
         throw error
@@ -35,20 +38,36 @@ export const eventRequestMiddleware = async (request: AuthEventRequest, response
             } else if(is_member) {
                 request.role = EventRole.MEMBER
             } else {
-                return response.status(401).json({
+                return response.status(401).send({
                     error: "Unauthorized action: user does not belong to event."
                 })
             }
             
             next()
         } else {
-            return response.status(401).json({
+            return response.status(404).send({
                 error: "Event doesn't exist."
             })
         }
 
     } catch (error) {
         console.log("error in eventRequestMiddleware ", error)
+        throw error
+    }
+}
+
+export const eventCreatorMiddleware = async (request: AuthEventRequest, response: Response, next: NextFunction) => {
+    try {
+        if (request.role == EventRole.CREATOR) {
+            next()
+        } else {
+            return response.status(401).send({
+                message: "Unauthorized action: user does not own event."
+            })
+        }
+
+    } catch (error) {
+        console.log("error in eventCreatorMiddleware ", error)
         throw error
     }
 }

@@ -2,6 +2,8 @@ import { NextFunction, Response } from 'express';
 import { AuthRequest } from './auth';
 import Box from "../models/box.model";
 import { BoxRole } from '../types/box.enum';
+import mongoose, { isObjectIdOrHexString, isValidObjectId } from 'mongoose';
+import { ObjectId } from 'mongodb';
 
 export interface AuthBoxRequest extends AuthRequest {
     role: BoxRole
@@ -9,9 +11,11 @@ export interface AuthBoxRequest extends AuthRequest {
 
 const boxValidation = async (box_id: string) => {
     try {
-        const box = await Box.findById(box_id)
-        return box
-
+        if (isObjectIdOrHexString(box_id)) {
+            return await Box.findById(box_id);
+        } else {
+            return null
+        }
     } catch (error) {
         console.log("error in boxValidation ", error)
         throw error
@@ -49,6 +53,22 @@ export const boxRequestMiddleware = async (request: AuthBoxRequest, response: Re
 
     } catch (error) {
         console.log("error in boxRequestMiddleware ", error)
+        throw error
+    }
+}
+
+export const boxCreatorMiddleware = async (request: AuthBoxRequest, response: Response, next: NextFunction) => {
+    try {
+        if (request.role == BoxRole.CREATOR) {
+            next()
+        } else {
+            return response.status(401).send({
+                message: "Unauthorized action: user does not own box."
+            })
+        }
+
+    } catch (error) {
+        console.log("error in boxCreatorMiddleware ", error)
         throw error
     }
 }

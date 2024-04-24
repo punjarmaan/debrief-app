@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
 require('dotenv').config();
 
-const connectToDB = async () => {
+export const connectToDB = async () => {
     try {
         const connection = await mongoose.connect(
             process.env.MONGO_TEMP
         )
-
+        
         if (connection) {
             console.log("Connected to MongoDB!")
         }
@@ -15,5 +15,3 @@ const connectToDB = async () => {
         throw error
     }
 }
-
-export default connectToDB

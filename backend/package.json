@@ -6,7 +6,9 @@
   "scripts": {
     "test": "cross-env NODE_ENV=TEST jest --coverage --forceExit --detectOpenHandles --maxWorkers=1",
     "start": "cross-env NODE_ENV=LOCAL ts-node ./src/server.ts",
-    "build": "cross-env NODE_ENV=BUILD tsc"
+    "build": "cross-env NODE_ENV=BUILD tsc",
+    "setup": "ts-node ./tests/scripts/initTestData.ts",
+    "takedown": "ts-node ./tests/scripts/deleteTestData.ts"
   },
   "author": "Armaan Punj",
   "license": "ISC",
@@ -20,10 +22,14 @@
     "multer": "^1.4.5-lts.1"
   },
   "devDependencies": {
+    "@babel/core": "^7.24.4",
+    "@babel/preset-env": "^7.24.4",
+    "@babel/preset-typescript": "^7.24.1",
     "@types/express": "^4.17.21",
     "@types/jest": "^29.5.12",
     "@types/node": "^20.11.20",
     "@types/supertest": "^6.0.2",
+    "babel-jest": "^29.7.0",
     "cross-env": "^7.0.3",
     "jest": "^29.7.0",
     "nodemon": "^3.1.0",
