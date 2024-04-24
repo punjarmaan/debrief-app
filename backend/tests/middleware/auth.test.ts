@@ -69,7 +69,7 @@ describe("Authentication MiddleWare", () => {
 
     const res = await request(app)
         .put("/api/auth-user/edit")
-        .auth("eyJhbGciOiJIUzI1NiIsInR5kCI6IkpXVCJ9.eyJfaWQiOiI2NjE4NWE1MDMwMjA5Yzc4MDk5NTQzZGEiLCJpYXQiOjE3MTI4NzIwMjgsImV4cCI6MTcyMTUxMjAyOH0.GNSLA36iW1uV57UhAQrfYlR4XF42pkUpBGzfoM80BbM", { type: "bearer" })
+        .auth(IV_TOKEN, { type: "bearer" })
         .send(sampleInfoToUpdate)
 
     expect(res.body.message).toEqual("Invalid token.")

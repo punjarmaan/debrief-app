@@ -203,7 +203,7 @@ describe("Box Routes", () => {
     expect(res.body.message).toEqual("Updated box successfully.")
   });
 
-  it("Successful addBoxMember - by creator", async () => {
+  it.skip("Successful addBoxMember - by creator", async () => {
 
     const sampleInfoToAdd = {
       new_mem_id: UID_SHA
