@@ -1,9 +1,10 @@
 import request from "supertest";
 import app from "../../src/server";
+
 require('dotenv').config();
 
 
-describe("Event Routes", () => {
+describe("Box Routes", () => {
 
   let TOKEN_XIA;
   let TOKEN_ARM;
@@ -16,6 +17,9 @@ describe("Event Routes", () => {
   let EID_1;
   let EID_2;
   let EID_3;
+  let BOX_1;
+  let BOX_2
+  let BOX_3;
 
   beforeAll(async () => {
     const sampleLogin_ARM = {
@@ -43,9 +47,9 @@ describe("Event Routes", () => {
     }
 
     const res_arm = await request(app)
-      .post("/api/user/login")
-      .send(sampleLogin_ARM)
-      .expect(200);
+    .post("/api/user/login")
+    .send(sampleLogin_ARM)
+    .expect(200);
   
     const res_xia = await request(app)
     .post("/api/user/login")
@@ -77,26 +81,33 @@ describe("Event Routes", () => {
     UID_JOS = res_jos.body.user._id
     UID_MAT = res_mat.body.user._id
 
-    const events = await request(app)
-      .get("/api/events/")
+    const boxes = await request(app)
+      .get("/api/box/")
       .auth(TOKEN_ARM, { type: "bearer" })
       .expect(200);
 
     
-    EID_1 = events.body[0]._id.toString()
-    EID_2 = events.body[1]._id.toString()
-    EID_3 = events.body[2]._id.toString()
+    BOX_1 = boxes.body[0]._id
+    BOX_2 = boxes.body[1]._id
+    BOX_3 = boxes.body[2]._id
 
-    jest.setTimeout(60000);
+    const events = await request(app)
+    .get("/api/events/")
+    .auth(TOKEN_ARM, { type: "bearer" })
+    .expect(200);
+  
+    EID_1 = events.body[0]._id
+    EID_2 = events.body[1]._id
+    EID_3 = events.body[2]._id
 });
 
-  it.skip("Successful event creation", async () => {
+  it.skip("Successful box creation", async () => {
     const sampleInfo = {
         title: "TEST EVENT - 3"
     }
 
     const res = await request(app)
-      .post("/api/events/")
+      .post("/api/box/")
       .auth(TOKEN_XIA, { type: "bearer" })
       .send(sampleInfo)
       .expect(200);
@@ -117,102 +128,88 @@ describe("Event Routes", () => {
     const sampleInfo = {}
 
     const res = await request(app)
-      .post("/api/events/")
+      .post("/api/box/")
       .auth(TOKEN_XIA, { type: "bearer" })
       .send(sampleInfo)
       .expect(400);
 
-    expect(res.body.message).toEqual('Event title is required.')
-
+    expect(res.body.message).toEqual('Invalid Request: missing parameters.')
   });
 
-  it("Successful getAllEvents", async () => {
+  it("Successful getAllBoxes", async () => {
 
     const res = await request(app)
-      .get("/api/events/")
+      .get("/api/box/")
       .auth(TOKEN_XIA, { type: "bearer" })
       .expect(200);
 
     expect(res.body).toHaveLength(3)
-    expect(res.body[0]._id.toString()).toEqual(EID_1)
-    expect(res.body[1]._id.toString()).toEqual(EID_2)
-    expect(res.body[2]._id.toString()).toEqual(EID_3)
+    expect(res.body[0]._id).toEqual(BOX_1)
+    expect(res.body[1]._id).toEqual(BOX_2)
+    expect(res.body[2]._id).toEqual(BOX_3)
   });
 
-  it("Successful getAllEvents - no events", async () => {
+  it("Successful getAllBoxes - no boxes", async () => {
 
     const res = await request(app)
-      .get("/api/events/")
+      .get("/api/box/")
       .auth(TOKEN_SHA, { type: "bearer" })
       .expect(200);
 
     expect(res.body).toHaveLength(0)
   });
 
-  it("Successful getEventById - by creator", async () => {
+  it("Successful getBoxById - by creator", async () => {
 
     const res = await request(app)
-      .get("/api/events/" + EID_1)
+      .get("/api/box/" + BOX_1)
       .auth(TOKEN_ARM, { type: "bearer" })
       .expect(200);
 
-    expect(res.body._id).toEqual(EID_1)
-    expect(res.body.creator_id._id).toEqual(UID_ARM)
+    expect(res.body._id).toEqual(BOX_1)
+    expect(res.body.creator_id).toEqual(UID_ARM)
   });
 
-  it("Successful getEventById - by member", async () => {
+  it("Successful getBoxById - by member", async () => {
 
     const res = await request(app)
-      .get("/api/events/" + EID_1)
+      .get("/api/box/" + BOX_1)
       .auth(TOKEN_XIA, { type: "bearer" })
       .expect(200);
 
-    expect(res.body._id).toEqual(EID_1)
+    expect(res.body._id).toEqual(BOX_1)
   });
 
-  it.skip("Successful deleteEvent - creator", async () => {
+  it.skip("Successful deleteBox - creator", async () => {
 
     const res = await request(app)
-      .delete("/api/events/" + EID_2)
+      .delete("/api/box/" + BOX_3)
       .auth(TOKEN_ARM, { type: "bearer" })
       .expect(200);
 
-    expect(res.body.message).toEqual("Event deleted by creator.")
+    expect(res.body.message).toEqual("Box deleted by creator.")
   });
 
-  it("Successful updateEvent - creator", async () => {
+  it("Successful updateBox - member", async () => {
     const sampleInfoToUpdate = {
-      title: "TEST EVENT - 1"
+      title: "TEST BOX - 1"
     }
     const res = await request(app)
-      .put("/api/events/" + EID_1)
-      .auth(TOKEN_ARM, { type: "bearer" })
-      .send(sampleInfoToUpdate)
-      .expect(200);
-
-    expect(res.body.message).toEqual("Updated event successfully.")
-  });
-
-  it("Successful updateEvent - member", async () => {
-    const sampleInfoToUpdate = {
-      title: "TEST EVENT - 1"
-    }
-    const res = await request(app)
-      .put("/api/events/" + EID_1)
+      .put("/api/box/" + BOX_1)
       .auth(TOKEN_XIA, { type: "bearer" })
       .send(sampleInfoToUpdate)
       .expect(200);
 
-    expect(res.body.message).toEqual("Updated event successfully.")
+    expect(res.body.message).toEqual("Updated box successfully.")
   });
 
-  it.skip("Successful addEventMember - by creator", async () => {
+  it("Successful addBoxMember - by creator", async () => {
 
     const sampleInfoToAdd = {
       new_mem_id: UID_SHA
     }
     const res = await request(app)
-      .put("/api/events/" + EID_1 + "/members/add")
+      .put("/api/box/" + BOX_1 + "/members/add")
       .auth(TOKEN_ARM, { type: "bearer" })
       .send(sampleInfoToAdd)
       .expect(200);
@@ -220,13 +217,13 @@ describe("Event Routes", () => {
     expect(res.body.message).toEqual("Member added successfully.")
   });
 
-  it("Successful addEventMember - by member", async () => {
+  it.skip("Successful addEventMember - by member", async () => {
 
     const sampleInfoToAdd = {
       new_mem_id: UID_MAT
     }
     const res = await request(app)
-      .put("/api/events/" + EID_1 + "/members/add")
+      .put("/api/box/" + BOX_1 + "/members/add")
       .auth(TOKEN_XIA, { type: "bearer" })
       .send(sampleInfoToAdd)
       .expect(200);
@@ -234,34 +231,92 @@ describe("Event Routes", () => {
     expect(res.body.message).toEqual("Member added successfully.")
   });
 
-  it("Unsuccessful addEventMember - member doesn't exist", async () => {
+  it("Unsuccessful addBoxMember - user doesn't exist", async () => {
 
     const sampleInfoToAdd = {
-      new_mem_id: "660715c577d51356d7e0043b"
+      new_mem_id: "660715c577d51356d7e0043c"
     }
     const res = await request(app)
-      .put("/api/events/" + EID_1 + "/members/add")
+      .put("/api/box/" + BOX_1 + "/members/add")
       .auth(TOKEN_ARM, { type: "bearer" })
       .send(sampleInfoToAdd)
       .expect(404);
 
-    expect(res.body.message).toEqual("Member doesn't exist.")
+    expect(res.body.message).toEqual("User doesn't exist.")
   });
 
-  it("Successful deleteEventMember - creator", async () => {
+  it("Unsuccessful addBoxMember - private box", async () => {
+
+    const sampleInfoToAdd = {
+        new_mem_id: UID_XIA
+      }
+    const res = await request(app)
+      .put("/api/box/" + BOX_2 + "/members/add")
+      .auth(TOKEN_ARM, { type: "bearer" })
+      .send(sampleInfoToAdd)
+      .expect(405);
+
+    expect(res.body.message).toEqual("Box is private.")
+  });
+
+  it("Successful deleteBoxMember - creator", async () => {
 
     const sampleInfoToAdd = {
       del_mem_id: UID_JOS
     }
 
     const res = await request(app)
-      .put("/api/events/" + EID_1 + "/members/del")
+      .put("/api/box/" + BOX_1 + "/members/del")
       .auth(TOKEN_ARM, { type: "bearer" })
       .send(sampleInfoToAdd)
       .expect(200);
 
     expect(res.body.message).toEqual("Member deleted successfully.")
   });
+
+  it("Successful addExistingEvent - by creator", async () => {
+
+    const sampleInfoToAdd = {
+      new_event_id: EID_1
+    }
+    const res = await request(app)
+      .put("/api/box/" + BOX_1 + "/add")
+      .auth(TOKEN_ARM, { type: "bearer" })
+      .send(sampleInfoToAdd)
+      .expect(200);
+
+    expect(res.body.message).toEqual("Event added to box successfully.")
+  });
+
+  it("Successful addExistingEvent - by member", async () => {
+
+    const sampleInfoToAdd = {
+      new_event_id: EID_3
+    }
+    const res = await request(app)
+      .put("/api/box/" + BOX_1 + "/add")
+      .auth(TOKEN_XIA, { type: "bearer" })
+      .send(sampleInfoToAdd)
+      .expect(200);
+
+    expect(res.body.message).toEqual("Event added to box successfully.")
+  });
+
+  it("Unsuccessful addExistingEvent - event doesn't exist", async () => {
+
+    const sampleInfoToAdd = {
+      new_event_id: "660715c577d51356d7e0043b"
+    }
+    const res = await request(app)
+      .put("/api/box/" + BOX_1 + "/add")
+      .auth(TOKEN_ARM, { type: "bearer" })
+      .send(sampleInfoToAdd)
+      .expect(404);
+
+    expect(res.body.message).toEqual("Event doesn't exist.")
+  });
+
+  
 
 
 

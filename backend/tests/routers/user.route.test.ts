@@ -3,8 +3,8 @@ import request from "supertest";
 import app from "../../src/server";
 require('dotenv').config();
 
-const PHONE = "410"
-const PASS = "test"
+const PHONE = process.env.ARM_PHONE
+const PASS = process.env.LOGIN_PASS
 
 describe("User Routes", () => {
   it.skip("successful user creation", async () => {
@@ -15,7 +15,6 @@ describe("User Routes", () => {
         password: "test",
         phone_extension: "+1",
         phone_number: "0000000001"
-
     }
     const res = await request(app).post("/api/user/create").send(sampleInfo).expect(201);
 
@@ -60,14 +59,14 @@ describe("User Routes", () => {
     }
     const res = await request(app).post("/api/user/login").send(sampleLogin);
 
-    expect(res.body.user.firstName).toEqual("Armaan3");
-    expect(res.body.user.lastName).toEqual("Punj3");
+    expect(res.body.user.firstName).toEqual("Armaan");
+    expect(res.body.user.lastName).toEqual("Punj");
     expect(res.body.user.phone_number).toEqual(PHONE)
   });
 
   it("unsuccessful login - wrong number", async () => {
     const sampleLogin = {
-        phone_number: "401",
+        phone_number: "00",
         password: PASS
     }
     const res = await request(app).post("/api/user/login").send(sampleLogin);
@@ -78,7 +77,7 @@ describe("User Routes", () => {
   it("unsuccessful login - wrong password", async () => {
     const sampleLogin = {
         phone_number: PHONE,
-        password: "testing"
+        password: "test"
     }
     const res = await request(app).post("/api/user/login").send(sampleLogin);
 
@@ -91,7 +90,6 @@ describe("User Routes", () => {
     }
     const res = await request(app).post("/api/user/login").send(sampleLogin).expect(422)
 
-    console.log(res.body)
-    expect(res.body.error).toEqual("Invalid login parameters.");
+    expect(res.body.message).toEqual("Missing phone number or password.");
   });
 });

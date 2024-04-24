@@ -163,7 +163,6 @@ export const addEventMember = async (request: AuthEventRequest, response: Respon
             return response.status(200).send({ message: "Member added successfully." })
         }
         
-        return response.send({ message: "Error adding member." })
     } catch (error) {
         console.log("error in addEventMember ", error)
         throw error
@@ -176,6 +175,7 @@ export const deleteEventMember = async (request: AuthEventRequest, response: Res
         const { event_id } = request.params
         const { del_mem_id } = request.body
         const { role } = request
+
 
         if (role != EventRole.CREATOR) {
             return response.status(401).send({ message: "Unauthorized action: User does not own event." })

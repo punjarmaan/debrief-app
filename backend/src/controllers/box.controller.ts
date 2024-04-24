@@ -1,17 +1,17 @@
 import { Response } from "express";
 import Box from "../models/box.model";
 import { BoxProfile } from "../types";
+import { BoxRole } from "../types/box.enum";
 import { AuthBoxRequest } from "../middleware/box";
 import User from "../models/user.model";
 import Event from "../models/event.model"
+import mongoose from "mongoose";
 
 export const getAllBoxes = async (request: AuthBoxRequest, response: Response) => {
     try {
         const { user } = request
         const boxes = await Box.find({
-            $or: [{
-                members: user
-            }]
+            members: user
         })
         .populate({
             path: 'events',
@@ -34,6 +34,29 @@ export const getBoxById = async (request: AuthBoxRequest, response: Response) =>
         const { box_id } = request.params
 
         const box = await Box.findById({
+            _id: box_id
+        }).populate({
+            path: 'events',
+            select: 'title images members'
+        })
+
+        if (box) {
+            return response.status(200).send(box)  
+        } 
+        
+        return response.status(401).send("Box doesn't exist.")
+    } catch (error) {
+        console.log("error in getBoxById ", error)
+        throw error
+    }
+}
+
+export const getEventsByBoxId = async (request: AuthBoxRequest, response: Response) => {
+    try {
+        const { user } = request
+        const { box_id } = request.params
+
+        const box = await Box.findById({
             box_id
         }).populate({
             path: 'events',
@@ -44,7 +67,7 @@ export const getBoxById = async (request: AuthBoxRequest, response: Response) =>
             return response.status(200).send(box)  
         } 
         
-        return response.status(401).send("Box doesn't exist or unauthorized action.")
+        return response.status(401).send("Box doesn't exist.")
     } catch (error) {
         console.log("error in getBoxById ", error)
         throw error
@@ -54,6 +77,10 @@ export const getBoxById = async (request: AuthBoxRequest, response: Response) =>
 export const createBox = async (request: AuthBoxRequest, response: Response) => {
     try {
         const { title, is_private }: BoxProfile = request.body
+
+        if (!title || !is_private) {
+            return response.status(400).send({ message: "Invalid Request: missing parameters." })
+        }
         const { user } = request
         
         const box = await Box.create({
@@ -79,12 +106,8 @@ export const deleteBox = async (request: AuthBoxRequest, response: Response) => 
         const { box_id } = request.params
         const { user } = request
 
-        const boxToDelete = await Box.findById(box_id)
-
-        if (!boxToDelete) {
-            return response.status(404).send({ message: "Box does not exist." })
-        } else if (!(boxToDelete.creator_id.toString() === user)) {
-            return response.status(401).send({ message: "Unauthorized deletion: user does not own box."})
+        if (request.role != BoxRole.CREATOR) {
+            return response.status(401).send({ message: "Unauthorized action: user does not own box." })
         }
 
         const result = await Box.deleteOne({
@@ -92,11 +115,8 @@ export const deleteBox = async (request: AuthBoxRequest, response: Response) => 
         })
 
         if (result.deletedCount == 1) {
-            return response.send({ message: "Box deleted by creator."})
+            return response.status(200).send({ message: "Box deleted by creator."})
         }
-
-        return response.send({ message: "Error deleting box."})
-
 
     } catch (error) {
         console.log("error in deleteBox ", error)
@@ -109,16 +129,7 @@ export const updateBox = async (request: AuthBoxRequest, response: Response) => 
         const { title, is_private}: BoxProfile = request.body
         const { box_id } = request.params
         const { user } = request
-
-        const boxToUpdate = await Box.findById(box_id)
-        const mem_exists = boxToUpdate.members.some(id => id.toString() == user)
         
-        if (!boxToUpdate) {
-            return response.status(404).send({ message: "box does not exist." })
-        } else if (!(boxToUpdate.creator_id.toString() == user)) {
-            return response.status(401).send({ message: "Unauthorized action: user does not own box." })
-        }
-
         const result = await Box.updateOne({
             _id: box_id
         }, 
@@ -129,7 +140,7 @@ export const updateBox = async (request: AuthBoxRequest, response: Response) => 
          }})
 
         if (result.modifiedCount == 1) {
-            return response.send({ message: "Updated box successfully." })
+            return response.status(200).send({ message: "Updated box successfully." })
         }
         
         return response.send({ message: "Error updating box." })
@@ -144,23 +155,22 @@ export const addBoxMember = async (request: AuthBoxRequest, response: Response) 
 
         const { user } = request
         const { box_id } = request.params
-
-        const locked = await (await Box.findById(box_id)).private
-
-        if (locked) {
-            return response.send({ message: "Box is private." })
-        }
-
-
         const { new_mem_id } = request.body
+        const is_private = await (await Box.findById(box_id)).private
+        let new_mem_exists;
 
-        const new_mem_exists = await User.findById(new_mem_id)
-        
-
-        if (!new_mem_exists) {
-            return response.send({ message: "Member doesn't exist" })
+        if (is_private) {
+            return response.status(405).send({ message: "Box is private." })
         }
 
+        if (mongoose.Types.ObjectId.isValid(new_mem_id)) {
+            new_mem_exists = await User.findById(new_mem_id)
+        }
+
+        if (!new_mem_exists || new_mem_exists.id == null) {
+            return response.status(404).send({ message: "User doesn't exist." })
+        }
+        
         const result = await Box.updateOne(
             { _id: box_id,
               members: user
@@ -188,16 +198,20 @@ export const deleteBoxMember = async (request: AuthBoxRequest, response: Respons
         const { user } = request
         const { box_id } = request.params
         const { del_mem_id } = request.body
+        let del_mem_exists;
 
-
-        const box = await Box.findById(box_id)
-
-        if (!box) {
-            return response.status(404).send({ message: "box does not exist." })
-        } else if (!(box.creator_id.toString() === user)) {
-            return response.status(401).send({ message: "Unauthorized deletion: user does not own box."})
+        if (request.role != BoxRole.CREATOR) {
+            return response.status(401).send()
         }
 
+        if (mongoose.Types.ObjectId.isValid(del_mem_id)) {
+            del_mem_exists = await User.findById(del_mem_id)
+        }
+
+        if (!del_mem_exists || del_mem_exists.id == null) {
+            return response.status(404).send({ message: "User doesn't exist" })
+        }
+        
         const result = await Box.updateOne({ 
                 _id: box_id,
             },
@@ -229,7 +243,7 @@ export const addExistingEvent = async (request: AuthBoxRequest, response: Respon
         
 
         if (!event_exists) {
-            return response.send({ message: "Event doesn't exist" })
+            return response.status(404).send({ message: "Event doesn't exist." })
         }
 
         const result = await Box.updateOne(
@@ -245,10 +259,10 @@ export const addExistingEvent = async (request: AuthBoxRequest, response: Respon
         
 
         if (result.modifiedCount == 1) {
-            return response.send({ message: "Event added successfully."})
+            return response.status(200).send({ message: "Event added to box successfully."})
         } 
         
-        return response.send({ message: "Couldn't find event." })
+        return response.status(404).send({ message: "Event not found." })
     } catch (error) {
         console.log("error in addExistingEvent ", error)
         throw error

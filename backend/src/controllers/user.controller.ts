@@ -22,7 +22,6 @@ export const createUser = async (request: Request, response: Response) => {
         const phone_extension = request.body.phone_extension;
         const phone_number = request.body.phone_number;
 
-        console.log(request.body.firstName)
         // {firstName, lastName, username, password, phone_extension, phone_number} = request.body
         const userExists = await User.findOne({
             username
@@ -51,7 +50,7 @@ export const createUser = async (request: Request, response: Response) => {
             response.send({ message: "Error creating user." })
         }
 
-        return response.status(201).send({message: "User created successfully."})
+        return response.status(201).send({ message: "User created successfully." })
 
     } catch (error) {
         console.log('error in createUser', error);
@@ -63,6 +62,10 @@ export const loginUser = async (request: Request, response: Response) => {
     try {
         const { phone_number, password }: UserProfile = request.body
 
+        if (!phone_number || !password) {
+            return response.status(422).send({ message: "Missing phone number or password." })
+        }
+
         const userExists = await User.findOne({
             phone_number
         })
@@ -70,13 +73,8 @@ export const loginUser = async (request: Request, response: Response) => {
         if (!userExists) {
             return response.status(409).send({ message: "User doesn't exist." })
         }
-
-        const passwordMatch = await bcrypt.compare(
-            password,
-            (
-                await userExists
-            ).password
-        )
+        
+        const passwordMatch = await bcrypt.compare(password, userExists.password)
 
         if (passwordMatch) {
             const token = getUserToken((await userExists)._id)
@@ -85,7 +83,8 @@ export const loginUser = async (request: Request, response: Response) => {
                 user: {
                     phone_number: phone_number,
                     firstName: (await userExists).firstName,
-                    lastName: (await userExists).lastName
+                    lastName: (await userExists).lastName,
+                    _id: (await userExists)._id
                 }
             })
         } else {

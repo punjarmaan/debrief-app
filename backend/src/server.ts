@@ -1,5 +1,5 @@
 import express, { Request, Response, application } from 'express'
-import connectToDB from './db'
+import { connectToDB } from './db'
 import userRoutes from './routers/user.route';
 import eventRoutes from './routers/event.route'
 import authUserRoutes from './routers/auth-user.route'
