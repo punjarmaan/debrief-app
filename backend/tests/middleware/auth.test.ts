@@ -7,6 +7,8 @@ describe("Authentication MiddleWare", () => {
   
   let TOKEN_XIA;
   let UID_XIA;
+
+  let IV_TOKEN;
   
   beforeAll(async () => {
   const sampleLogin_XIA = {
@@ -35,6 +37,8 @@ describe("Authentication MiddleWare", () => {
         .expect(200)
 
     expect(res.body.message).toEqual("Profile updated successfully.")
+
+    IV_TOKEN = process.env.IV_TOKEN
   });
 
   it("Unsuccessful auth-user action - no token", async () => {
