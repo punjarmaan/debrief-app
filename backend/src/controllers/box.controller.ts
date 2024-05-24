@@ -51,6 +51,32 @@ export const getBoxById = async (request: AuthBoxRequest, response: Response) =>
     }
 }
 
+export const unlockBoxById = async (request: AuthBoxRequest, response: Response) => {
+    try {
+        const { user } = request
+        const { box_id } = request.params
+
+        const box = await Box.findOneAndUpdate({
+            _id: box_id
+        },
+        {
+            $set: {
+                locked: false
+            }
+        })
+
+        if (box) {
+            return response.status(200).send(box)  
+        } 
+        
+        return response.status(401).send("Box doesn't exist.")
+    } catch (error) {
+        console.log("error in unlockBoxById ", error)
+        throw error
+    }
+}
+
+
 export const getEventsByBoxId = async (request: AuthBoxRequest, response: Response) => {
     try {
         const { user } = request
@@ -94,7 +120,7 @@ export const createBox = async (request: AuthBoxRequest, response: Response) => 
             return response.status(200).send(box)  
         }
         
-        return response.status(401).send("Error creating box.")
+        return response.status(400).send("Error creating box.")
 
     } catch (error) {
         console.log("error in createBox ", error)
@@ -265,6 +291,37 @@ export const addExistingEvent = async (request: AuthBoxRequest, response: Respon
         return response.status(404).send({ message: "Event not found." })
     } catch (error) {
         console.log("error in addExistingEvent ", error)
+        throw error
+    }
+}
+
+export const leaveBox = async (request: AuthBoxRequest, response: Response) => {
+    try {
+        const { user } = request
+        const { event_id } = request.params
+        const { role } = request
+
+        if (role == BoxRole.CREATOR) {
+            return response.status(401).send({ message: "User cannot leave their own box." })
+        }
+
+        const result = await Box.updateOne({ 
+            _id: event_id,
+        },
+        {
+            $pull: {
+                members: user
+            }
+        })
+
+        if (result.modifiedCount == 1) {
+            return response.status(200).send({ message: "Left box successfully." })
+        } 
+    
+        return response.status(401).send({ message: "Error leaving box." })
+
+    } catch (error) {
+        console.log("error in leaveBox ", error)
         throw error
     }
 }

@@ -37,14 +37,6 @@ const eventSchema = new mongoose.Schema(
             required: false,
             default: []
         }
-        // categories: {
-        //     type: [{
-        //         type: [String],
-        //         enum: eventCategories
-        //     }],
-        //     required: false,
-        //     default: []
-        // }
     }, 
     {
         timestamps: true

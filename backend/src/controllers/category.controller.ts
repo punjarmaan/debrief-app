@@ -1,90 +1,39 @@
 import { Response } from "express";
-import Event from "../models/event.model";
-import { EventProfile } from "../types";
 import { AuthRequest } from "../middleware/auth";
-import { AuthEventRequest } from "../middleware/event";
-import User from "../models/user.model";
-import { EventRole } from "../types/event.enum";
+import Category from "../models/category.model";
 
 
-export const getAllEvents = async (request: AuthRequest, response: Response) => {
+export const getAllCategories = async (request: AuthRequest, response: Response) => {
     try {
         const { user } = request
-        const events = await Event.find({
-            members: user
+        const categories = await Category.find({
+            user_id: user
         }).select('-createdAt -updatedAt -__v')
 
-        if (!events) {
-            return response.status(404).send("Error finding events.")
+        if (!categories) {
+            return response.status(404).send({ message: "Error finding categories." })
         }
-        return response.status(200).send(events)
+        return response.status(200).send(categories)
     } catch (error) {
-        console.log("error in getAllEvents ", error)
+        console.log("error in getAllCategories ", error)
         throw error
     }
 }
 
-export const getLockedEvents = async (request: AuthRequest, response: Response) => {
+export const getCategoryById = async (request: AuthRequest, response: Response) => {
     try {
         const { user } = request
-        const boxes = await Event.find({
-            locked: true,
-            members: user 
-        })
-        .populate({
-            path: 'events',
-            select: 'title'
-        })
-
-        if (!boxes) {
-            return response.status(404).send("Error finding boxes.")
-        }
-        return response.status(200).send(boxes)
-    } catch (error) {
-        console.log("error in getAllBoxes\n", error)
-        throw error
-    }
-}
-
-export const getOpenEvents = async (request: AuthRequest, response: Response) => {
-    try {
-        const { user } = request
-        const boxes = await Event.find({
-            locked: false,
-            members: user
-        })
-        .populate({
-            path: 'events',
-            select: 'title'
-        })
-
-        if (!boxes) {
-            return response.status(404).send("Error finding boxes.")
-        }
-        return response.status(200).send(boxes)
-    } catch (error) {
-        console.log("error in getAllBoxes\n", error)
-        throw error
-    }
-}
-
-export const getEventById = async (request: AuthEventRequest, response: Response) => {
-    try {
-        const { user } = request
-        const { event_id } = request.params
+        const { category_id } = request.params
 
 
-        const event = await Event.findById({
-            _id: event_id
+        const category = await Category.findById({
+            _id: category_id
         }).populate({
-            path: 'creator_id',
-            select: 'username firstName lastName _id'
-        }).populate({
-            path: 'members',
-            select: 'username firstName lastName _id'
+            path: 'events',
+            select: 'title images members'
         }).select('-createdAt -updatedAt -__v')
 
-        return response.status(200).send(event)
+        return response.status(200).send(category)
     } catch (error) {
         console.log("error in getEventById ", error)
         throw error

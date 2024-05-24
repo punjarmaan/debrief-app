@@ -6,16 +6,24 @@ const imageSchema = new mongoose.Schema(
             type: String,
             required: true,
         },
-        file_key: {
+        key: {
             type: String,
             required: true,
         },
+        tags: {
+            type: [{
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'User'
+            }],
+            required: false,
+            default: []
+        }
     }, 
     {
         timestamps: true
     }
 )
 
-const Img = mongoose.model("Event", imageSchema)
+const Image = mongoose.model("Image", imageSchema)
 
-export default Img
+export default Image

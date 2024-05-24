@@ -1,13 +1,13 @@
 import mongoose from "mongoose";
 
-const friendSchema = new mongoose.Schema(
+const friendRequestSchema = new mongoose.Schema(
     {
-        user_id: {
+        sender: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
             required: true
         },
-        friend_id: {
+        receiver: {
             type: mongoose.Schema.Types.ObjectId,
             ref: 'User',
             required: true
@@ -18,6 +18,6 @@ const friendSchema = new mongoose.Schema(
     }
 )
 
-const Friend = mongoose.model("Friend", friendSchema)
+const FriendRequest = mongoose.model("FriendRequest", friendRequestSchema)
 
-export default Friend
+export default FriendRequest

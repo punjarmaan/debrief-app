@@ -91,7 +91,7 @@ export const getUserById = async (request: AuthRequest, response: Response) => {
 
         const user_to_find = await User.findById({
             _id: user_id
-        }).select('-password -phone_extension -phone_number -createdAt -updatedAt -__v')
+        }).select('-paswsord -phone_extension -phone_number -createdAt -updatedAt -__v')
 
         if (user_to_find) {
             return response.status(200).send(user_to_find)
