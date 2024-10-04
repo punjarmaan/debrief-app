@@ -2,25 +2,24 @@ import { NextFunction, Response } from 'express';
 import { AuthRequest } from './auth';
 import Box from "../models/box.model";
 import { BoxRole } from '../types/box.enum';
-import mongoose, { isObjectIdOrHexString, isValidObjectId } from 'mongoose';
-import { ObjectId } from 'mongodb';
+import idValidation from './id';
 
 export interface AuthBoxRequest extends AuthRequest {
     role: BoxRole
 }
 
-const boxValidation = async (box_id: string) => {
-    try {
-        if (isObjectIdOrHexString(box_id)) {
-            return await Box.findById(box_id);
-        } else {
-            return null
-        }
-    } catch (error) {
-        console.log("error in boxValidation ", error)
-        throw error
-    }
-}
+// const boxValidation = async (box_id: string) => {
+//     try {
+//         if (isObjectIdOrHexString(box_id)) {
+//             return await Box.findById(box_id);
+//         } else {
+//             return null
+//         }
+//     } catch (error) {
+//         console.log("error in boxValidation ", error)
+//         throw error
+//     }
+// }
 
 export const boxRequestMiddleware = async (request: AuthBoxRequest, response: Response, next: NextFunction) => {
     try {
@@ -28,7 +27,7 @@ export const boxRequestMiddleware = async (request: AuthBoxRequest, response: Re
         const { box_id } = request.params
         const { user } = request
 
-        const box = await boxValidation(box_id)
+        const box = await idValidation(box_id, Box)
         
         if (box) {
             const is_creator = box.creator_id.toString() == user
