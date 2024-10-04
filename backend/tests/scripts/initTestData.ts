@@ -23,11 +23,13 @@ export const insertTestData = async () => {
         console.log("Connected to MongoDB!")
     }
 
-    let ARM_ID;
-    let XIA_ID;
-    let SHA_ID;
-    let JOS_ID;
-    let MAT_ID;
+    let O_ID;
+    let F1_ID;
+    let F2_ID;
+    let F3_ID;
+    let R1_ID;
+    let R2_ID;
+    let M_ID;
 
     // Insert user tset data
     let user_ids = new Map<string, string>();
@@ -54,10 +56,15 @@ export const insertTestData = async () => {
 
     console.log("Test users saved.")
 
-    ARM_ID = user_ids.get("armaan")
-    XIA_ID = user_ids.get("crystal")
-    JOS_ID = user_ids.get("josh")
-    MAT_ID = user_ids.get("matthew")
+    O_ID = user_ids.get("owen")
+    F1_ID = user_ids.get("fiona1")
+    F2_ID = user_ids.get("fiona2")
+    F3_ID = user_ids.get("fiona3")
+    R1_ID = user_ids.get("rory1")
+    R2_ID = user_ids.get("rory2")
+    M_ID = user_ids.get("mary")
+
+
 
     // insert event-related test data
 
@@ -68,8 +75,8 @@ export const insertTestData = async () => {
       const event = events.at(i)
       const new_event = await Event.create({
         title: event.title,
-        creator_id: ARM_ID,
-        members: [ARM_ID,XIA_ID,JOS_ID]
+        creator_id: O_ID,
+        members: [O_ID, F1_ID, F2_ID]
       })
 
       if (!new_event) {
@@ -93,8 +100,8 @@ export const insertTestData = async () => {
       const box = boxes.at(i)
       const new_box = await Box.create({
         title: box.title,
-        creator_id: ARM_ID,
-        members: [ARM_ID,XIA_ID,JOS_ID],
+        creator_id: O_ID,
+        members: [O_ID, F1_ID, F2_ID],
         private: box.is_private
       })
 
@@ -109,6 +116,8 @@ export const insertTestData = async () => {
       console.log("Error adding all test boxes.")
       process.exit()
     }
+
+    console.log("Test boxes created.")
 
     // save user ids
     await fs.writeFile(path.join(__dirname, '../data/testUserIds.json'), JSON.stringify(Array.from(user_ids.values())));

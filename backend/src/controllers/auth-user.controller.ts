@@ -38,7 +38,7 @@ export const updateProfile = async (request: AuthRequest, response: Response) =>
             return response.status(409).send({ message: "Phone number is associated with an existing account." })
         }
 
-        const result =await User.updateOne({
+        const result = await User.updateOne({
             _id: user
         }, 
         {

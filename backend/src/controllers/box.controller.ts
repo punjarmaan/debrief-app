@@ -21,6 +21,7 @@ export const getAllBoxes = async (request: AuthBoxRequest, response: Response) =
         if (!boxes) {
             return response.status(404).send("Error finding boxes.")
         }
+
         return response.status(200).send(boxes)
     } catch (error) {
         console.log("error in getAllBoxes\n", error)
@@ -51,28 +52,54 @@ export const getBoxById = async (request: AuthBoxRequest, response: Response) =>
     }
 }
 
-export const getEventsByBoxId = async (request: AuthBoxRequest, response: Response) => {
+export const unlockBoxById = async (request: AuthBoxRequest, response: Response) => {
     try {
         const { user } = request
         const { box_id } = request.params
 
-        const box = await Box.findById({
-            box_id
-        }).populate({
-            path: 'events',
-            select: 'title images members'
+        const box = await Box.findOneAndUpdate({
+            _id: box_id
+        },
+        {
+            $set: {
+                locked: false
+            }
         })
 
         if (box) {
             return response.status(200).send(box)  
-        } 
+        }
         
         return response.status(401).send("Box doesn't exist.")
     } catch (error) {
-        console.log("error in getBoxById ", error)
+        console.log("error in unlockBoxById ", error)
         throw error
     }
 }
+
+
+// export const getEventsByBoxId = async (request: AuthBoxRequest, response: Response) => {
+//     try {
+//         const { user } = request
+//         const { box_id } = request.params
+
+//         const box = await Box.findById({
+//             box_id
+//         }).populate({
+//             path: 'events',
+//             select: 'title images members'
+//         })
+
+//         if (box) {
+//             return response.status(200).send(box)  
+//         }
+        
+//         return response.status(401).send("Box doesn't exist.")
+//     } catch (error) {
+//         console.log("error in getBoxById ", error)
+//         throw error
+//     }
+// }
 
 export const createBox = async (request: AuthBoxRequest, response: Response) => {
     try {
@@ -81,6 +108,7 @@ export const createBox = async (request: AuthBoxRequest, response: Response) => 
         if (!title || !is_private) {
             return response.status(400).send({ message: "Invalid Request: missing parameters." })
         }
+
         const { user } = request
         
         const box = await Box.create({
@@ -94,7 +122,7 @@ export const createBox = async (request: AuthBoxRequest, response: Response) => 
             return response.status(200).send(box)  
         }
         
-        return response.status(401).send("Error creating box.")
+        return response.status(400).send("Error creating box.")
 
     } catch (error) {
         console.log("error in createBox ", error)
@@ -106,9 +134,6 @@ export const deleteBox = async (request: AuthBoxRequest, response: Response) => 
         const { box_id } = request.params
         const { user } = request
 
-        if (request.role != BoxRole.CREATOR) {
-            return response.status(401).send({ message: "Unauthorized action: user does not own box." })
-        }
 
         const result = await Box.deleteOne({
             _id: box_id
@@ -172,8 +197,8 @@ export const addBoxMember = async (request: AuthBoxRequest, response: Response) 
         }
         
         const result = await Box.updateOne(
-            { _id: box_id,
-              members: user
+            { 
+                _id: box_id
             },
             {
                 $push: {
@@ -184,7 +209,7 @@ export const addBoxMember = async (request: AuthBoxRequest, response: Response) 
 
         if (result.modifiedCount == 1) {
             return response.send({ message: "Member added successfully."})
-        } 
+        }
         
         return response.send({ message: "Error adding member." })
     } catch (error) {
@@ -247,9 +272,8 @@ export const addExistingEvent = async (request: AuthBoxRequest, response: Respon
         }
 
         const result = await Box.updateOne(
-            { 
-                _id: box_id,
-                members: user
+            {
+                _id: box_id
             },
             {
                 $push: {
@@ -265,6 +289,37 @@ export const addExistingEvent = async (request: AuthBoxRequest, response: Respon
         return response.status(404).send({ message: "Event not found." })
     } catch (error) {
         console.log("error in addExistingEvent ", error)
+        throw error
+    }
+}
+
+export const leaveBox = async (request: AuthBoxRequest, response: Response) => {
+    try {
+        const { user } = request
+        const { event_id } = request.params
+        const { role } = request
+
+        if (role == BoxRole.CREATOR) {
+            return response.status(401).send({ message: "User cannot leave their own box." })
+        }
+
+        const result = await Box.updateOne({ 
+            _id: event_id,
+        },
+        {
+            $pull: {
+                members: user
+            }
+        })
+
+        if (result.modifiedCount == 1) {
+            return response.status(200).send({ message: "Left box successfully." })
+        } 
+    
+        return response.status(401).send({ message: "Error leaving box." })
+
+    } catch (error) {
+        console.log("error in leaveBox ", error)
         throw error
     }
 }

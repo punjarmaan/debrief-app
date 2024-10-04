@@ -5,6 +5,7 @@ import eventRoutes from './routers/event.route'
 import authUserRoutes from './routers/auth-user.route'
 import friendRoutes from './routers/friend.route';
 import boxRoutes from './routers/box.route';
+import friendRequestRoutes from './routers/friend-request.route';
 
 const app = express()
 app.use(express.json())
@@ -23,6 +24,7 @@ app.use("/api/events", eventRoutes)
 app.use("/api/auth-user", authUserRoutes)
 app.use("/api/friends", friendRoutes)
 app.use("/api/box", boxRoutes)
+app.use("/api/reqs", friendRequestRoutes)
 
 // Comment out code below when testing with jest
 if (process.env.NODE_ENV == 'LOCAL') {

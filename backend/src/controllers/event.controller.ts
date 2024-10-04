@@ -1,12 +1,13 @@
 import { Response } from "express";
 import Event from "../models/event.model";
 import { EventProfile } from "../types";
+import { AuthRequest } from "../middleware/auth";
 import { AuthEventRequest } from "../middleware/event";
 import User from "../models/user.model";
 import { EventRole } from "../types/event.enum";
 
 
-export const getAllEvents = async (request: AuthEventRequest, response: Response) => {
+export const getAllEvents = async (request: AuthRequest, response: Response) => {
     try {
         const { user } = request
         const events = await Event.find({
@@ -19,6 +20,50 @@ export const getAllEvents = async (request: AuthEventRequest, response: Response
         return response.status(200).send(events)
     } catch (error) {
         console.log("error in getAllEvents ", error)
+        throw error
+    }
+}
+
+export const getLockedEvents = async (request: AuthRequest, response: Response) => {
+    try {
+        const { user } = request
+        const boxes = await Event.find({
+            locked: true,
+            members: user 
+        })
+        .populate({
+            path: 'events',
+            select: 'title'
+        })
+
+        if (!boxes) {
+            return response.status(404).send("Error finding boxes.")
+        }
+        return response.status(200).send(boxes)
+    } catch (error) {
+        console.log("error in getAllBoxes\n", error)
+        throw error
+    }
+}
+
+export const getOpenEvents = async (request: AuthRequest, response: Response) => {
+    try {
+        const { user } = request
+        const boxes = await Event.find({
+            locked: false,
+            members: user
+        })
+        .populate({
+            path: 'events',
+            select: 'title'
+        })
+
+        if (!boxes) {
+            return response.status(404).send("Error finding boxes.")
+        }
+        return response.status(200).send(boxes)
+    } catch (error) {
+        console.log("error in getAllBoxes\n", error)
         throw error
     }
 }
@@ -126,16 +171,16 @@ export const updateEvent = async (request: AuthEventRequest, response: Response)
     }
 }
 
-export const uploadTest = async (request: AuthEventRequest, response: Response) => {
-    try {
-        console.log("request.body", request.body.title)
-        console.log("request.body.binary", request.body.binary)
-        response.send({ message: "img uploaded" })
-    } catch (error) {
-        console.log("error in uploadTest ", error)
-        throw error
-    }
-}
+// export const uploadTest = async (request: AuthEventRequest, response: Response) => {
+//     try {
+//         console.log("request.body", request.body.title)
+//         console.log("request.body.binary", request.body.binary)
+//         response.send({ message: "img uploaded" })
+//     } catch (error) {
+//         console.log("error in uploadTest ", error)
+//         throw error
+//     }
+// }
 
 export const addEventMember = async (request: AuthEventRequest, response: Response) => {
     try {
@@ -198,6 +243,37 @@ export const deleteEventMember = async (request: AuthEventRequest, response: Res
 
     } catch (error) {
         console.log("error in deleteEventMember ", error)
+        throw error
+    }
+}
+
+export const leaveEvent = async (request: AuthEventRequest, response: Response) => {
+    try {
+        const { user } = request
+        const { event_id } = request.params
+        const { role } = request
+
+        if (role == EventRole.CREATOR) {
+            return response.status(401).send({ message: "User cannot leave their own event." })
+        }
+
+        const result = await Event.updateOne({ 
+            _id: event_id,
+        },
+        {
+            $pull: {
+                members: user
+            }
+        })
+
+        if (result.modifiedCount == 1) {
+            return response.status(200).send({ message: "Left event successfully." })
+        } 
+    
+        return response.status(401).send({ message: "Error leaving event." })
+
+    } catch (error) {
+        console.log("error in leaveEvent ", error)
         throw error
     }
 }

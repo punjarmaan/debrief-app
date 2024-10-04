@@ -1,21 +1,29 @@
 import mongoose from "mongoose";
 
-const imageSchema = new mongoose.Schema(
+const imgSchema = new mongoose.Schema(
     {
         creator_id: {
             type: String,
             required: true,
         },
-        file_key: {
+        key: {
             type: String,
             required: true,
         },
+        tags: {
+            type: [{
+                type: mongoose.Schema.Types.ObjectId,
+                ref: 'User'
+            }],
+            required: false,
+            default: []
+        }
     }, 
     {
         timestamps: true
     }
 )
 
-const Img = mongoose.model("Event", imageSchema)
+const Img = mongoose.model("Img", imgSchema)
 
 export default Img

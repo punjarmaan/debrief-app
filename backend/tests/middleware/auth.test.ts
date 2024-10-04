@@ -5,34 +5,34 @@ require('dotenv').config();
 
 describe("Authentication MiddleWare", () => {
   
-  let TOKEN_XIA;
-  let UID_XIA;
+  let TOKEN_FIO1;
+  let UID_FIO1;
 
   let IV_TOKEN;
   
   beforeAll(async () => {
-  const sampleLogin_XIA = {
-        phone_number: process.env.XIA_PHONE,
+  const sampleLogin_FIO1 = {
+        phone_number: process.env.FIO1_PHONE,
         password: process.env.LOGIN_PASS
       }
-    const res_xia = await request(app).post("/api/user/login").send(sampleLogin_XIA);
+    const res_fio1 = await request(app).post("/api/user/login").send(sampleLogin_FIO1);
     
-    TOKEN_XIA = res_xia.body.token; // Extract the token from the response
-    UID_XIA = res_xia.body.user._id
+    TOKEN_FIO1 = res_fio1.body.token; // Extract the token from the response
+    UID_FIO1 = res_fio1.body.user._id
   });
   
   it("Successful auth-user action (updateProfile)", async () => {
     const sampleInfoToUpdate = {
-        firstName: "Crystal",
-        lastName: "Guo",
-        username: "crystal",
+        firstName: "Fiona",
+        lastName: "Friend1",
+        username: "fiona1",
         phone_extension: "+1",
-        phone_number: process.env.XIA_PHONE
+        phone_number: process.env.FIO1_PHONE
     }
 
     const res = await request(app)
         .put("/api/auth-user/edit")
-        .auth(TOKEN_XIA, { type: "bearer" })
+        .auth(TOKEN_FIO1, { type: "bearer" })
         .send(sampleInfoToUpdate)
         .expect(200)
 
@@ -43,11 +43,11 @@ describe("Authentication MiddleWare", () => {
 
   it("Unsuccessful auth-user action - no token", async () => {
     const sampleInfoToUpdate = {
-        firstName: "Crystal",
-        lastName: "Guo",
-        username: "crystal",
+        firstName: "Fiona",
+        lastName: "Friend1",
+        username: "fiona1",
         phone_extension: "+1",
-        phone_number: process.env.XIA_PHONE
+        phone_number: process.env.FIO1_PHONE
     }
 
     const res = await request(app)
@@ -60,11 +60,11 @@ describe("Authentication MiddleWare", () => {
 
   it("Unsuccessful auth-user action - invalid token", async () => {
     const sampleInfoToUpdate = {
-        firstName: "Crystal",
-        lastName: "Guo",
-        username: "crystal",
+        firstName: "Fiona",
+        lastName: "Friend1",
+        username: "fiona1",
         phone_extension: "+1",
-        phone_number: process.env.XIA_PHONE
+        phone_number: process.env.FIO1_PHONE
     }
 
     const res = await request(app)

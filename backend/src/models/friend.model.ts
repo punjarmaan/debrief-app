@@ -12,11 +12,9 @@ const friendSchema = new mongoose.Schema(
             ref: 'User',
             required: true
         },
-        status: {
-            type: Number,
-            required: true,
-            enum: [0, 1]
-        }
+    },
+    {
+        timestamps: true
     }
 )
 

@@ -1,6 +1,7 @@
 import express from "express";
 import { authenticateMiddleware } from "../middleware/auth";
-import { addFriend, getAllFriends, getFriendById, deleteFriendByFriendshipId, deleteFriendByUserId, acceptFriendByFriendshipId, acceptFriendByUserId } from "../controllers/friend.controller";
+import { friendMiddleware } from "../middleware/friend";
+import { getAllFriends, getFriendByUserId, getFriendByFriendshipId, deleteFriendByFriendshipId, deleteFriendByUserId } from "../controllers/friend.controller";
 
 const friendRoutes = express.Router()
 
@@ -9,12 +10,13 @@ friendRoutes.use(authenticateMiddleware)
 
 // User-specific friend routes
 friendRoutes.route("/").get(getAllFriends)
-friendRoutes.route("/:friend_id").get(getFriendById)
-friendRoutes.route("/:friend_id").put(acceptFriendByUserId)
-friendRoutes.route("/:friend_id").delete(deleteFriendByUserId)
-friendRoutes.route("/add/:friend_id").post(addFriend)
-friendRoutes.route("/accept/:friendship_id").put(acceptFriendByFriendshipId)
-friendRoutes.route("/delete/:friendship_id").delete(deleteFriendByFriendshipId)
+friendRoutes.route("/:friendship_id").get(getFriendByFriendshipId)
+friendRoutes.route("/:friendship_id").delete(deleteFriendByFriendshipId)
+
+// friend_id is verified before entering controller function
+friendRoutes.route("/user/:friend_id").get(friendMiddleware, getFriendByUserId)
+friendRoutes.route("/user/:friend_id").delete(friendMiddleware, deleteFriendByUserId)
+
 
 
 export default friendRoutes
