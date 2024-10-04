@@ -2,24 +2,24 @@ import { NextFunction, Response } from 'express';
 import { AuthRequest } from './auth';
 import Event from "../models/event.model";
 import { EventRole } from '../types/event.enum';
-import mongoose from 'mongoose';
+import idValidation from './id';
 
 export interface AuthEventRequest extends AuthRequest {
     role: EventRole
 }
 
-const eventValidation = async (event_id: string) => {
-    try {
-        if (mongoose.Types.ObjectId.isValid(event_id)) {
-            return await Event.findById(event_id);
-        } else {
-            return null
-        }
-    } catch (error) {
-        console.log("error in eventValidation ", error)
-        throw error
-    }
-}
+// const eventValidation = async (event_id: string) => {
+//     try {
+//         if (mongoose.Types.ObjectId.isValid(event_id)) {
+//             return await Event.findById(event_id);
+//         } else {
+//             return null
+//         }
+//     } catch (error) {
+//         console.log("error in eventValidation ", error)
+//         throw error
+//     }
+// }
 
 export const eventRequestMiddleware = async (request: AuthEventRequest, response: Response, next: NextFunction) => {
     try {
@@ -27,7 +27,7 @@ export const eventRequestMiddleware = async (request: AuthEventRequest, response
         const { event_id } = request.params
         const { user } = request
 
-        const event = await eventValidation(event_id)
+        const event = await idValidation(event_id, Event)
         
         if (event) {
             const is_creator = event.creator_id.toString() == user
