@@ -1,5 +1,5 @@
 import express from "express";
-import { getAllEvents, getLockedEvents, getOpenEvents, createEvent, deleteEvent, updateEvent, uploadTest, addEventMember, getEventById, deleteEventMember, leaveEvent } from "../controllers/event.controller";
+import { getAllEvents, getLockedEvents, getOpenEvents, createEvent, deleteEvent, updateEvent, addEventMember, getEventById, deleteEventMember, leaveEvent } from "../controllers/event.controller";
 import { authenticateMiddleware } from "../middleware/auth";
 import { eventCreatorMiddleware, eventRequestMiddleware } from "../middleware/event";
 
@@ -19,7 +19,7 @@ eventRoutes.route("/:event_id").put(eventRequestMiddleware, updateEvent)
 eventRoutes.route("/:event_id/leave").put(eventRequestMiddleware, leaveEvent)
 
 // Image upload to event routes
-eventRoutes.route("/test").post(uploadTest)
+// eventRoutes.route("/test").post(uploadTest)
 
 // Member-event relationship routes
 eventRoutes.route("/:event_id/members/add").put(eventRequestMiddleware, addEventMember)

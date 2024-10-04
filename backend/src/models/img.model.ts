@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const imageSchema = new mongoose.Schema(
+const imgSchema = new mongoose.Schema(
     {
         creator_id: {
             type: String,
@@ -24,6 +24,6 @@ const imageSchema = new mongoose.Schema(
     }
 )
 
-const Image = mongoose.model("Image", imageSchema)
+const Img = mongoose.model("Img", imgSchema)
 
-export default Image
+export default Img

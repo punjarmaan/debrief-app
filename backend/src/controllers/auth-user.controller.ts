@@ -38,7 +38,7 @@ export const updateProfile = async (request: AuthRequest, response: Response) =>
             return response.status(409).send({ message: "Phone number is associated with an existing account." })
         }
 
-        const result =await User.updateOne({
+        const result = await User.updateOne({
             _id: user
         }, 
         {
@@ -91,7 +91,7 @@ export const getUserById = async (request: AuthRequest, response: Response) => {
 
         const user_to_find = await User.findById({
             _id: user_id
-        }).select('-paswsord -phone_extension -phone_number -createdAt -updatedAt -__v')
+        }).select('-password -phone_extension -phone_number -createdAt -updatedAt -__v')
 
         if (user_to_find) {
             return response.status(200).send(user_to_find)

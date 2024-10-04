@@ -1,85 +1,88 @@
 import request from "supertest";
 import app from "../../src/server";
+import { FAKE_ID } from "../data/users";
 require('dotenv').config();
 
 
 describe("Event Routes", () => {
 
-  let TOKEN_XIA;
-  let TOKEN_ARM;
-  let TOKEN_SHA;
-  let UID_ARM;
-  let UID_XIA;
-  let UID_SHA;
-  let UID_JOS;
-  let UID_MAT;
+  let TOKEN_FIO1;
+  let TOKEN_OWN;
+  let TOKEN_ROR1;
+  let UID_OWN;
+  let UID_FIO1;
+  let UID_ROR1;
+  let UID_FIO2;
+  let UID_MAR;
   let EID_1;
   let EID_2;
   let EID_3;
 
+
+
   beforeAll(async () => {
-    const sampleLogin_ARM = {
-        phone_number: process.env.ARM_PHONE,
+    const sampleLogin_OWN = {
+        phone_number: process.env.OWN_PHONE,
         password: process.env.LOGIN_PASS
     }
-    const sampleLogin_XIA = {
-      phone_number: process.env.XIA_PHONE,
+    const sampleLogin_FIO1 = {
+      phone_number: process.env.FIO1_PHONE,
       password: process.env.LOGIN_PASS
     }
 
-    const sampleLogin_SHA = {
-      phone_number: process.env.SHA_PHONE,
+    const sampleLogin_ROR1 = {
+      phone_number: process.env.ROR1_PHONE,
       password: process.env.LOGIN_PASS
     }
 
-    const sampleLogin_JOS = {
-      phone_number: process.env.JOS_PHONE,
+    const sampleLogin_FIO2 = {
+      phone_number: process.env.FIO2_PHONE,
       password: process.env.LOGIN_PASS
     }
 
-    const sampleLogin_MAT = {
-      phone_number: process.env.MAT_PHONE,
+    const sampleLogin_MAR = {
+      phone_number: process.env.MAR_PHONE,
       password: process.env.LOGIN_PASS
     }
 
-    const res_arm = await request(app)
+    const res_own = await request(app)
       .post("/api/user/login")
-      .send(sampleLogin_ARM)
+      .send(sampleLogin_OWN)
       .expect(200);
   
-    const res_xia = await request(app)
+    const res_fio1 = await request(app)
     .post("/api/user/login")
-    .send(sampleLogin_XIA)
+    .send(sampleLogin_FIO1)
     .expect(200);
 
-    const res_sha = await request(app)
+    const res_ror1 = await request(app)
     .post("/api/user/login")
-    .send(sampleLogin_SHA)
+    .send(sampleLogin_ROR1)
     .expect(200);
 
-    const res_jos = await request(app)
+    const res_fio2 = await request(app)
     .post("/api/user/login")
-    .send(sampleLogin_JOS)
+    .send(sampleLogin_FIO2)
     .expect(200);
 
-    const res_mat = await request(app)
+    const res_mar = await request(app)
     .post("/api/user/login")
-    .send(sampleLogin_MAT)
+    .send(sampleLogin_MAR)
     .expect(200);
     
-    TOKEN_XIA = res_xia.body.token
-    TOKEN_ARM = res_arm.body.token
-    TOKEN_SHA = res_sha.body.token
+    TOKEN_FIO1 = res_fio1.body.token
+    TOKEN_OWN = res_own.body.token
+    TOKEN_ROR1 = res_ror1.body.token
 
-    UID_XIA = res_xia.body.user._id
-    UID_ARM = res_arm.body.user._id
-    UID_SHA = res_sha.body.user._id
-    UID_JOS = res_jos.body.user._id
-    UID_MAT = res_mat.body.user._id
+    UID_FIO1 = res_fio1.body.user._id
+    UID_OWN = res_own.body.user._id
+    UID_ROR1 = res_ror1.body.user._id
+    UID_FIO2 = res_fio2.body.user._id
+    UID_MAR = res_mar.body.user._id
 
     const events = await request(app)
       .get("/api/events/")
-      .auth(TOKEN_ARM, { type: "bearer" })
+      .auth(TOKEN_OWN, { type: "bearer" })
       .expect(200);
 
     
@@ -97,7 +100,7 @@ describe("Event Routes", () => {
 
     const res = await request(app)
       .post("/api/events/")
-      .auth(TOKEN_XIA, { type: "bearer" })
+      .auth(TOKEN_FIO1, { type: "bearer" })
       .send(sampleInfo)
       .expect(200);
 
@@ -118,7 +121,7 @@ describe("Event Routes", () => {
 
     const res = await request(app)
       .post("/api/events/")
-      .auth(TOKEN_XIA, { type: "bearer" })
+      .auth(TOKEN_FIO1, { type: "bearer" })
       .send(sampleInfo)
       .expect(400);
 
@@ -130,7 +133,7 @@ describe("Event Routes", () => {
 
     const res = await request(app)
       .get("/api/events/")
-      .auth(TOKEN_XIA, { type: "bearer" })
+      .auth(TOKEN_FIO1, { type: "bearer" })
       .expect(200);
 
     expect(res.body).toHaveLength(3)
@@ -143,7 +146,7 @@ describe("Event Routes", () => {
 
     const res = await request(app)
       .get("/api/events/")
-      .auth(TOKEN_SHA, { type: "bearer" })
+      .auth(TOKEN_ROR1, { type: "bearer" })
       .expect(200);
 
     expect(res.body).toHaveLength(0)
@@ -153,18 +156,18 @@ describe("Event Routes", () => {
 
     const res = await request(app)
       .get("/api/events/" + EID_1)
-      .auth(TOKEN_ARM, { type: "bearer" })
+      .auth(TOKEN_OWN, { type: "bearer" })
       .expect(200);
 
     expect(res.body._id).toEqual(EID_1)
-    expect(res.body.creator_id._id).toEqual(UID_ARM)
+    expect(res.body.creator_id._id).toEqual(UID_OWN)
   });
 
   it("Successful getEventById - by member", async () => {
 
     const res = await request(app)
       .get("/api/events/" + EID_1)
-      .auth(TOKEN_XIA, { type: "bearer" })
+      .auth(TOKEN_FIO1, { type: "bearer" })
       .expect(200);
 
     expect(res.body._id).toEqual(EID_1)
@@ -174,7 +177,7 @@ describe("Event Routes", () => {
 
     const res = await request(app)
       .delete("/api/events/" + EID_2)
-      .auth(TOKEN_ARM, { type: "bearer" })
+      .auth(TOKEN_OWN, { type: "bearer" })
       .expect(200);
 
     expect(res.body.message).toEqual("Event deleted by creator.")
@@ -182,11 +185,11 @@ describe("Event Routes", () => {
 
   it("Successful updateEvent - creator", async () => {
     const sampleInfoToUpdate = {
-      title: "TEST EVENT - 1"
+      title: "TEST EVENT - 01"
     }
     const res = await request(app)
       .put("/api/events/" + EID_1)
-      .auth(TOKEN_ARM, { type: "bearer" })
+      .auth(TOKEN_OWN, { type: "bearer" })
       .send(sampleInfoToUpdate)
       .expect(200);
 
@@ -195,11 +198,11 @@ describe("Event Routes", () => {
 
   it("Successful updateEvent - member", async () => {
     const sampleInfoToUpdate = {
-      title: "TEST EVENT - 1"
+      title: "TEST EVENT - 03"
     }
     const res = await request(app)
-      .put("/api/events/" + EID_1)
-      .auth(TOKEN_XIA, { type: "bearer" })
+      .put("/api/events/" + EID_3)
+      .auth(TOKEN_FIO1, { type: "bearer" })
       .send(sampleInfoToUpdate)
       .expect(200);
 
@@ -209,11 +212,11 @@ describe("Event Routes", () => {
   it.skip("Successful addEventMember - by creator", async () => {
 
     const sampleInfoToAdd = {
-      new_mem_id: UID_SHA
+      new_mem_id: UID_ROR1
     }
     const res = await request(app)
       .put("/api/events/" + EID_1 + "/members/add")
-      .auth(TOKEN_ARM, { type: "bearer" })
+      .auth(TOKEN_OWN, { type: "bearer" })
       .send(sampleInfoToAdd)
       .expect(200);
 
@@ -223,11 +226,11 @@ describe("Event Routes", () => {
   it("Successful addEventMember - by member", async () => {
 
     const sampleInfoToAdd = {
-      new_mem_id: UID_MAT
+      new_mem_id: UID_MAR
     }
     const res = await request(app)
       .put("/api/events/" + EID_1 + "/members/add")
-      .auth(TOKEN_XIA, { type: "bearer" })
+      .auth(TOKEN_FIO1, { type: "bearer" })
       .send(sampleInfoToAdd)
       .expect(200);
 
@@ -237,11 +240,11 @@ describe("Event Routes", () => {
   it("Unsuccessful addEventMember - member doesn't exist", async () => {
 
     const sampleInfoToAdd = {
-      new_mem_id: "660715c577d51356d7e0043b"
+      new_mem_id: FAKE_ID
     }
     const res = await request(app)
       .put("/api/events/" + EID_1 + "/members/add")
-      .auth(TOKEN_ARM, { type: "bearer" })
+      .auth(TOKEN_OWN, { type: "bearer" })
       .send(sampleInfoToAdd)
       .expect(404);
 
@@ -251,12 +254,12 @@ describe("Event Routes", () => {
   it("Successful deleteEventMember - creator", async () => {
 
     const sampleInfoToAdd = {
-      del_mem_id: UID_JOS
+      del_mem_id: UID_FIO2
     }
 
     const res = await request(app)
       .put("/api/events/" + EID_1 + "/members/del")
-      .auth(TOKEN_ARM, { type: "bearer" })
+      .auth(TOKEN_OWN, { type: "bearer" })
       .send(sampleInfoToAdd)
       .expect(200);
 

@@ -171,16 +171,16 @@ export const updateEvent = async (request: AuthEventRequest, response: Response)
     }
 }
 
-export const uploadTest = async (request: AuthEventRequest, response: Response) => {
-    try {
-        console.log("request.body", request.body.title)
-        console.log("request.body.binary", request.body.binary)
-        response.send({ message: "img uploaded" })
-    } catch (error) {
-        console.log("error in uploadTest ", error)
-        throw error
-    }
-}
+// export const uploadTest = async (request: AuthEventRequest, response: Response) => {
+//     try {
+//         console.log("request.body", request.body.title)
+//         console.log("request.body.binary", request.body.binary)
+//         response.send({ message: "img uploaded" })
+//     } catch (error) {
+//         console.log("error in uploadTest ", error)
+//         throw error
+//     }
+// }
 
 export const addEventMember = async (request: AuthEventRequest, response: Response) => {
     try {

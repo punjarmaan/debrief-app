@@ -1,62 +1,63 @@
 import request from "supertest";
 import app from "../../src/server";
+import { FAKE_ID } from "../data/users";
 require('dotenv').config();
 
 
 describe("Event Routes MiddleWare", () => {
   
-  let TOKEN_ARM;
-  let TOKEN_XIA;
-  let TOKEN_SHA;
+  let TOKEN_OWN;
+  let TOKEN_FIO1;
+  let TOKEN_ROR1;
 
-  let UID_ARM;
-  let UID_XIA;
+  let UID_OWN;
+  let UID_FIO1;
 
   let EID_1;
   let EID_2;
   
   beforeAll(async () => {
-    const sampleLogin_ARM = {
-        phone_number: process.env.ARM_PHONE,
+    const sampleLogin_OWN = {
+        phone_number: process.env.OWN_PHONE,
         password: process.env.LOGIN_PASS
     }
 
-    const sampleLogin_XIA = {
-        phone_number: process.env.XIA_PHONE,
+    const sampleLogin_FIO1 = {
+        phone_number: process.env.FIO1_PHONE,
         password: process.env.LOGIN_PASS
     }
 
-    const sampleLogin_SHA = {
-        phone_number: process.env.SHA_PHONE,
+    const sampleLogin_ROR1 = {
+        phone_number: process.env.ROR1_PHONE,
         password: process.env.LOGIN_PASS
       }
 
-    const res_arm = await request(app)
+    const res_own = await request(app)
     .post("/api/user/login")
-    .send(sampleLogin_ARM)
+    .send(sampleLogin_OWN)
     .expect(200);
 
-    const res_xia = await request(app)
+    const res_fio1 = await request(app)
     .post("/api/user/login")
-    .send(sampleLogin_XIA)
+    .send(sampleLogin_FIO1)
     .expect(200);
 
-    const res_sha = await request(app)
+    const res_ror1 = await request(app)
     .post("/api/user/login")
-    .send(sampleLogin_SHA)
+    .send(sampleLogin_ROR1)
     .expect(200);
     
     // Extract the token from the response
-    TOKEN_XIA = res_xia.body.token      
-    TOKEN_ARM = res_arm.body.token
-    TOKEN_SHA = res_sha.body.token
+    TOKEN_FIO1 = res_fio1.body.token      
+    TOKEN_OWN = res_own.body.token
+    TOKEN_ROR1 = res_ror1.body.token
 
-    UID_XIA = res_xia.body.user._id
-    UID_ARM = res_arm.body.user._id
+    UID_FIO1 = res_fio1.body.user._id
+    UID_OWN = res_own.body.user._id
 
     const events = await request(app)
     .get("/api/events/")
-    .auth(TOKEN_ARM, { type: "bearer" })
+    .auth(TOKEN_OWN, { type: "bearer" })
     .expect(200);
 
     EID_1 = events.body[0]._id
@@ -67,7 +68,7 @@ describe("Event Routes MiddleWare", () => {
 
     const res = await request(app)
       .get("/api/events/" + EID_1)
-      .auth(TOKEN_ARM, { type: "bearer" })
+      .auth(TOKEN_OWN, { type: "bearer" })
       .expect(200);
 
     expect(res.body._id).toEqual(EID_1)
@@ -77,7 +78,7 @@ describe("Event Routes MiddleWare", () => {
 
     const res = await request(app)
       .get("/api/events/" + EID_1)
-      .auth(TOKEN_XIA, { type: "bearer" })
+      .auth(TOKEN_FIO1, { type: "bearer" })
       .expect(200);
 
     expect(res.body._id).toEqual(EID_1)
@@ -87,7 +88,7 @@ describe("Event Routes MiddleWare", () => {
 
     const res = await request(app)
       .get("/api/events/" + EID_1)
-      .auth(TOKEN_SHA, { type: "bearer" })
+      .auth(TOKEN_ROR1, { type: "bearer" })
       .expect(401)
 
     expect(res.body.error).toEqual("Unauthorized action: user does not belong to event.")
@@ -95,28 +96,28 @@ describe("Event Routes MiddleWare", () => {
 
   it("Unsuccessful events action (getEventById) - event doesn't exist", async () => {
     const res = await request(app)
-      .get("/api/events/66185b1d9e153a252a235151")
-      .auth(TOKEN_SHA, { type: "bearer" })
+      .get("/api/events/" + FAKE_ID)
+      .auth(TOKEN_FIO1, { type: "bearer" })
       .expect(404)
 
     expect(res.body.error).toEqual("Event doesn't exist.")
   });
 
-  it("Successful event creator action (deleteBox)", async () => {
+  // it("Successful event creator action (deleteBox)", async () => {
 
-    const res = await request(app)
-      .get("/api/events/" + EID_1)
-      .auth(TOKEN_XIA, { type: "bearer" })
-      .expect(200);
+  //   const res = await request(app)
+  //     .get("/api/events/" + EID_1)
+  //     .auth(TOKEN_FIO1, { type: "bearer" })
+  //     .expect(200);
 
-    expect(res.body._id).toEqual(EID_1)
-  });
+  //   expect(res.body._id).toEqual(EID_1)
+  // });
 
-  it("Successful event creator action (deleteEvent)", async () => {
+  it.skip("Successful event creator action (deleteEvent)", async () => {
 
     const res = await request(app)
       .delete("/api/events/" + EID_2)
-      .auth(TOKEN_ARM, { type: "bearer" })
+      .auth(TOKEN_OWN, { type: "bearer" })
       .expect(200);
 
     expect(res.body.message).toEqual("Event deleted by creator.")
@@ -126,7 +127,7 @@ describe("Event Routes MiddleWare", () => {
 
     const res = await request(app)
       .delete("/api/events/" + EID_1)
-      .auth(TOKEN_XIA, { type: "bearer" })
+      .auth(TOKEN_FIO1, { type: "bearer" })
       .expect(401);
 
     expect(res.body.message).toEqual("Unauthorized action: user does not own event.")

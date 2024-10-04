@@ -28,7 +28,7 @@ export const getAllReceivedRequests = async (request: AuthRequest, response: Res
 
         return response.status(200).send(requests)
     } catch (error) {
-        console.log("error in getAllIncomingRequests ", error)
+        console.log("error in getAllReceivedRequests ", error)
         throw error
     }
 }
@@ -138,7 +138,6 @@ export const getRequestById = async (request: AuthRequest, response: Response) =
     }
 }
 
-
 export const addFriendByUserId = async (request: AuthRequest, response: Response) => {
     try {
         const { user } = request
@@ -163,16 +162,18 @@ export const addFriendByUserId = async (request: AuthRequest, response: Response
 
 export const acceptReqById = async (request: AuthRequest, response: Response) => {
     const session = await mongoose.startSession();
-    session.startTransaction();
 
     try {
+        session.startTransaction();
+
         const { user } = request
         const { request_id }  = request.params
 
         if (!request_id || !isObjectIdOrHexString(request_id)) { return response.status(400).send({ message: "Invalid request id." }) }
 
         const result = await FriendRequest.findOneAndDelete({
-            _id: request_id
+            _id: request_id,
+            receiver: user
         },{
             session
         })
@@ -188,24 +189,26 @@ export const acceptReqById = async (request: AuthRequest, response: Response) =>
             session
         })
 
+        await session.commitTransaction();
+
         if (!friend) {
             return response.status(400).send({ message: "Error creating friend." })
         }
 
         return response.status(200).send({ message: "Friend created successfully." })
     } catch (error) {
-        await session.abortTransaction();
         console.log("error in acceptReqById\n", error)
+        await session.abortTransaction();
     } finally {
-        session.endSession();
+        await session.endSession();
     }
 }
 
 export const acceptReqByUserId = async (request: AuthRequest, response: Response) => {
     const session = await mongoose.startSession();
-    session.startTransaction();
 
     try {
+        session.startTransaction();
         const { user } = request
         const { friend_id }  = request.params
 
@@ -227,6 +230,8 @@ export const acceptReqByUserId = async (request: AuthRequest, response: Response
             session
         })
 
+        await session.commitTransaction();
+
         if (!friend) {
             return response.status(400).send({ message: "Error creating friend." })
         }
@@ -236,7 +241,7 @@ export const acceptReqByUserId = async (request: AuthRequest, response: Response
         await session.abortTransaction();
         console.log("error in acceptReqByUserId\n", error)
     } finally {
-        session.endSession();
+        await session.endSession();
     }
 }
 
@@ -248,10 +253,8 @@ export const rejectReqById = async (request: AuthRequest, response: Response) =>
         if (!request_id || !isObjectIdOrHexString(request_id)) { return response.status(400).send({ message: "Invalid request id." }) }
 
         const result = await Friend.deleteOne({ 
-           $and: [
-            { _id: request_id},
-            { receiver: user }
-           ]
+            _id: request_id,
+            receiver: user
         })
 
         if (result.deletedCount == 1) {
@@ -271,10 +274,8 @@ export const rejectReqByUserId = async (request: AuthRequest, response: Response
         const { friend_id } = request.params
 
         const result = await FriendRequest.deleteOne({ 
-           $and: [
-            { sender: friend_id},
-            { receiver: user }
-           ]
+            sender: friend_id,
+            receiver: user
         })
 
         if (result.deletedCount == 1) {
@@ -288,18 +289,16 @@ export const rejectReqByUserId = async (request: AuthRequest, response: Response
     }
 }
 
-export const deleteReqById = async (request: AuthRequest, response: Response) => {
+export const unsendReqById = async (request: AuthRequest, response: Response) => {
     try {
         const { user } = request
         const { request_id } = request.params
 
         if (!request_id || !isObjectIdOrHexString(request_id)) { return response.status(400).send({ message: "Invalid request id." }) }
 
-        const result = await Friend.deleteOne({ 
-           $and: [
-            { _id: request_id},
-            { sender: user }
-           ]
+        const result = await FriendRequest.deleteOne({ 
+            _id: request_id,
+            sender: user
         })
 
         if (result.deletedCount == 1) {
@@ -313,16 +312,14 @@ export const deleteReqById = async (request: AuthRequest, response: Response) =>
     }
 }
 
-export const deleteReqByUserId = async (request: AuthRequest, response: Response) => {
+export const unsendReqByUserId = async (request: AuthRequest, response: Response) => {
     try {
         const { user } = request
         const { friend_id } = request.params
 
         const result = await FriendRequest.deleteOne({ 
-           $and: [
-            { sender: user},
-            { receiver: friend_id }
-           ]
+            sender: user,
+            receiver: friend_id
         })
 
         if (result.deletedCount == 1) {

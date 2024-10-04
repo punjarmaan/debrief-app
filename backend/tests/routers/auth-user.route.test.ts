@@ -1,45 +1,46 @@
 import request from "supertest";
-import { users } from '../data/users'
+import { users, FAKE_ID } from '../data/users'
 import app from "../../src/server";
 require('dotenv').config();
 
 describe("Auth-User Routes", () => {
-  let TOKEN_XIA;
-  let UID_XIA;
-  let UID_ARM;
+  let TOKEN_FIO1;
+  let UID_FIO1;
+  let UID_OWN;
 
   beforeAll(async () => {
 
-    const sampleLogin_XIA = {
-          phone_number: process.env.XIA_PHONE,
+    const sampleLogin_FIO1 = {
+          phone_number: process.env.FIO1_PHONE,
           password: process.env.LOGIN_PASS
         }
 
-    const sampleLogin_ARM = {
-          phone_number: process.env.ARM_PHONE,
+    const sampleLogin_OWN = {
+          phone_number: process.env.OWN_PHONE,
           password: process.env.LOGIN_PASS
         }
-    const res_xia = await request(app).post("/api/user/login").send(sampleLogin_XIA);
-    const res_arm = await request(app).post("/api/user/login").send(sampleLogin_ARM);
+
+    const res_fio1 = await request(app).post("/api/user/login").send(sampleLogin_FIO1);
+    const res_own = await request(app).post("/api/user/login").send(sampleLogin_OWN);
     
-    TOKEN_XIA = res_xia.body.token; // Extract the token + uid from the responses
-    UID_XIA = res_xia.body.user._id
-    UID_ARM = res_arm.body.user._id
+    TOKEN_FIO1 = res_fio1.body.token; // Extract the token + uid from the responses
+    UID_FIO1 = res_fio1.body.user._id
+    UID_OWN = res_own.body.user._id
   });
 
 
   it("Successful update profile", async () => {
     const sampleInfoToUpdate = {
-        firstName: "Crystal",
-        lastName: "Guo",
-        username: "crystal",
+        firstName: "Fiona",
+        lastName: "Friend1",
+        username: "fiona1",
         phone_extension: "+1",
-        phone_number: process.env.XIA_PHONE
+        phone_number: process.env.FIO1_PHONE
     }
 
     const res = await request(app)
         .put("/api/auth-user/edit")
-        .auth(TOKEN_XIA, { type: "bearer" })
+        .auth(TOKEN_FIO1, { type: "bearer" })
         .send(sampleInfoToUpdate)
         .expect(200)
 
@@ -48,16 +49,16 @@ describe("Auth-User Routes", () => {
 
   it("Unsuccessful update profile - username already exists", async () => {
     const sampleInfoToUpdate = {
-        firstName: "Crystal",
-        lastName: "Guo",
-        username: "armaan",
+        firstName: "Fiona",
+        lastName: "Friend1",
+        username: "owen",
         phone_extension: "+1",
-        phone_number: process.env.XIA_PHONE
+        phone_number: process.env.FIO1_PHONE
     }
 
     const res = await request(app)
         .put("/api/auth-user/edit")
-        .auth(TOKEN_XIA, { type: "bearer" })
+        .auth(TOKEN_FIO1, { type: "bearer" })
         .send(sampleInfoToUpdate)
         .expect(409)
 
@@ -67,16 +68,16 @@ describe("Auth-User Routes", () => {
 
   it("Unsuccessful update profile - phone number already exists", async () => {
     const sampleInfoToUpdate = {
-        firstName: "Crystal",
-        lastName: "Guo",
-        username: "crystal",
+        firstName: "Fiona",
+        lastName: "Friend1",
+        username: "fiona1",
         phone_extension: "+1",
-        phone_number: process.env.ARM_PHONE
+        phone_number: process.env.OWN_PHONE
     }
 
     const res = await request(app)
         .put("/api/auth-user/edit")
-        .auth(TOKEN_XIA, { type: "bearer" })
+        .auth(TOKEN_FIO1, { type: "bearer" })
         .send(sampleInfoToUpdate)
         .expect(409)
 
@@ -88,7 +89,7 @@ describe("Auth-User Routes", () => {
 
     const res = await request(app)
         .get("/api/auth-user/")
-        .auth(TOKEN_XIA, { type: "bearer" })
+        .auth(TOKEN_FIO1, { type: "bearer" })
         .expect(200)
 
     expect(res.body).toHaveLength(users.length - 1)
@@ -101,19 +102,19 @@ describe("Auth-User Routes", () => {
   it("Successful getUserById", async () => {
 
     const res = await request(app)
-        .get("/api/auth-user/" + UID_ARM)
-        .auth(TOKEN_XIA, { type: "bearer" })
+        .get("/api/auth-user/" + UID_OWN)
+        .auth(TOKEN_FIO1, { type: "bearer" })
         .expect(200)
     
     expect(res.body).toHaveProperty('_id')
-    expect(res.body._id).toEqual(UID_ARM.toString())
+    expect(res.body._id).toEqual(UID_OWN.toString())
   });
 
   it("Unuccessful getUserById - nonexistent user", async () => {
 
     const res = await request(app)
-        .get("/api/auth-user/65dd0ae15ada8af5565d5723")
-        .auth(TOKEN_XIA, { type: "bearer" })
+        .get("/api/auth-user/" + FAKE_ID)
+        .auth(TOKEN_FIO1, { type: "bearer" })
         .expect(404)
 
     expect(res.body.message).toEqual('User not found.')

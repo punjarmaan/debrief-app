@@ -28,7 +28,7 @@ export const createUser = async (request: Request, response: Response) => {
         })
 
         if (userExists) {
-            return response.status(409).send({ error: "User already exists." })
+            return response.status(409).send({ error: "Username already exists." })
         }
         
         if (!pass || pass.length == 0){

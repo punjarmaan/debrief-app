@@ -58,3 +58,5 @@ export const users = [
         phone_number: process.env.MAR_PHONE
     }
 ]
+
+export const FAKE_ID = "65dd0ae15ada8af5565d5723"
