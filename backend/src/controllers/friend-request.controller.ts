@@ -113,8 +113,7 @@ export const getRequestById = async (request: AuthRequest, response: Response) =
 
         const friend_request = await FriendRequest.findOne({
             _id: request_id
-         },
-         {
+            ,
              $or: [
                  { sender: user },
                  { receiver: user }
@@ -169,7 +168,10 @@ export const acceptReqById = async (request: AuthRequest, response: Response) =>
         const { user } = request
         const { request_id }  = request.params
 
-        if (!request_id || !isObjectIdOrHexString(request_id)) { return response.status(400).send({ message: "Invalid request id." }) }
+        if (!request_id || !isObjectIdOrHexString(request_id)) { 
+            await session.abortTransaction();
+            return response.status(400).send({ message: "Invalid request id." })
+        }
 
         const result = await FriendRequest.findOneAndDelete({
             _id: request_id,
@@ -182,19 +184,20 @@ export const acceptReqById = async (request: AuthRequest, response: Response) =>
             return response.status(404).send({ message: "Error finding friend request." })
         }
 
-        const friend = await Friend.create({
+        const friend = await Friend.create([{
             user_id: result.sender,
             friend_id: user,
-        }, {
+        }],
+        {
             session
-        })
-
-        await session.commitTransaction();
+        });
 
         if (!friend) {
+            await session.abortTransaction();
             return response.status(400).send({ message: "Error creating friend." })
         }
 
+        await session.commitTransaction();
         return response.status(200).send({ message: "Friend created successfully." })
     } catch (error) {
         console.log("error in acceptReqById\n", error)
@@ -220,21 +223,24 @@ export const acceptReqByUserId = async (request: AuthRequest, response: Response
         })
 
         if (result.deletedCount != 1) {
+            await session.abortTransaction();
             return response.status(404).send({ message: "Error finding friend request." })
         }
 
-        const friend = await Friend.create({
+        const friend = await Friend.create([{
             user_id: friend_id,
             friend_id: user,
-        }, {
+        }],
+        {
             session
         })
 
-        await session.commitTransaction();
-
         if (!friend) {
+            await session.abortTransaction();
             return response.status(400).send({ message: "Error creating friend." })
         }
+
+        await session.commitTransaction();
 
         return response.status(200).send({ message: "Friend created successfully." })
     } catch (error) {
@@ -252,7 +258,7 @@ export const rejectReqById = async (request: AuthRequest, response: Response) =>
 
         if (!request_id || !isObjectIdOrHexString(request_id)) { return response.status(400).send({ message: "Invalid request id." }) }
 
-        const result = await Friend.deleteOne({ 
+        const result = await FriendRequest.deleteOne({ 
             _id: request_id,
             receiver: user
         })

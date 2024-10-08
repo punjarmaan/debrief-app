@@ -156,9 +156,10 @@ export const updateEvent = async (request: AuthEventRequest, response: Response)
             _id: event_id
         }, 
         {
-        $set: {
-            title
-        }})
+            $set: {
+                title
+            }
+        })
     
         if (result.modifiedCount == 1) {
             return response.status(200).send({ message: "Updated event successfully." })
@@ -167,6 +168,31 @@ export const updateEvent = async (request: AuthEventRequest, response: Response)
         return response.send({ message: "Error updating event." })
     } catch (error) {
         console.log("error in updateEvent ", error)
+        throw error
+    }
+}
+
+export const unlockEvent = async (request: AuthEventRequest, response: Response) => {
+    try {
+        const { event_id } = request.params
+        const { user, role } = request
+
+        const result = await Event.updateOne({
+            _id: event_id
+        }, 
+        {
+            $set: {
+                locked: false
+            }
+        })
+    
+        if (result.modifiedCount == 1) {
+            return response.status(200).send({ message: "Unlocked event successfully." })
+        }
+
+        return response.send({ message: "Error unlocking event." })
+    } catch (error) {
+        console.log("error in unlockEvent ", error)
         throw error
     }
 }

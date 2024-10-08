@@ -24,7 +24,7 @@ friendRequestRoutes.route("/user/:friend_id").get(friendMiddleware, getRequestBy
 friendRequestRoutes.route("/add/:friend_id").post(friendMiddleware, addFriendByUserId)
 friendRequestRoutes.route("/accept/:friend_id").post(friendMiddleware, acceptReqByUserId)
 friendRequestRoutes.route("/reject/:friend_id").delete(friendMiddleware, rejectReqByUserId)
-friendRequestRoutes.route("/del/:friend_id").delete(friendMiddleware, unsendReqByUserId)
+friendRequestRoutes.route("/del/user/:friend_id").delete(friendMiddleware, unsendReqByUserId)
 
 
 export default friendRequestRoutes

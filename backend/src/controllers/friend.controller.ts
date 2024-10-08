@@ -1,7 +1,6 @@
 import { Request, Response } from "express";
 import { AuthRequest } from "../middleware/auth";
 import Friend from "../models/friend.model";
-import { FriendStatus } from "../types/friend.enum";
 import { isObjectIdOrHexString } from "mongoose";
 
 

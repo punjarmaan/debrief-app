@@ -76,7 +76,7 @@ export const insertTestData = async () => {
       const new_event = await Event.create({
         title: event.title,
         creator_id: O_ID,
-        members: [O_ID, F1_ID, F2_ID]
+        members: [O_ID, F1_ID, F2_ID, F3_ID]
       })
 
       if (!new_event) {
@@ -101,7 +101,7 @@ export const insertTestData = async () => {
       const new_box = await Box.create({
         title: box.title,
         creator_id: O_ID,
-        members: [O_ID, F1_ID, F2_ID],
+        members: [O_ID, F1_ID, F2_ID, F3_ID],
         private: box.is_private
       })
 
