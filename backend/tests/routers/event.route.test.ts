@@ -3,12 +3,15 @@ import app from "../../src/server";
 import { FAKE_ID } from "../data/users";
 require('dotenv').config();
 
+jest.setTimeout(60000);
+
 
 describe("Event Routes", () => {
 
   let TOKEN_FIO1;
   let TOKEN_OWN;
   let TOKEN_ROR1;
+  
   let UID_OWN;
   let UID_FIO1;
   let UID_ROR1;
@@ -89,8 +92,6 @@ describe("Event Routes", () => {
     EID_1 = events.body[0]._id.toString()
     EID_2 = events.body[1]._id.toString()
     EID_3 = events.body[2]._id.toString()
-
-    jest.setTimeout(60000);
 });
 
   it.skip("Successful event creation", async () => {

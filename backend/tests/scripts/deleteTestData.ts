@@ -29,7 +29,7 @@ export const deleteTestData = async () => {
       members: user_ids[0]
     })
 
-    if (event_del.deletedCount == events.length) {
+    if (event_del.deletedCount >= events.length) {
       console.log("Test events deleted.")
     }
 

@@ -13,9 +13,10 @@ export const getAllBoxes = async (request: AuthBoxRequest, response: Response) =
         const boxes = await Box.find({
             members: user
         })
+        .select('-updatedAt -__v')
         .populate({
             path: 'events',
-            select: 'title'
+            select: 'title creator_id images members createdAt'
         })
 
         if (!boxes) {
@@ -38,7 +39,7 @@ export const getBoxById = async (request: AuthBoxRequest, response: Response) =>
             _id: box_id
         }).populate({
             path: 'events',
-            select: 'title images members'
+            select: 'title creator_id images members createdAt'
         })
 
         if (box) {
@@ -340,11 +341,11 @@ export const addNewEvent = async (request: AuthBoxRequest, response: Response) =
             return response.status(400).send({ message: "Event title is required." })
         }
 
-        const event = await Event.create({
-            creator_id: user,
+        const event = await Event.create([{
             title: title,
+            creator_id: user,
             members: [user]
-        }, {
+        }], {
             session
         })
 

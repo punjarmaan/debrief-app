@@ -92,7 +92,7 @@ describe("Box Routes MiddleWare", () => {
   it("Unsuccessful box action (getBoxById) - non-member", async () => {
 
     const res = await request(app)
-      .get("/api/box/" + BOX_1)
+      .get("/api/box/" + BOX_3)
       .auth(TOKEN_ROR1, { type: "bearer" })
       .expect(401)
 

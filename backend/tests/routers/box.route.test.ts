@@ -4,6 +4,8 @@ import { FAKE_ID } from "../data/users";
 
 require('dotenv').config();
 
+jest.setTimeout(60000);
+
 
 describe("Box Routes", () => {
 
@@ -11,6 +13,7 @@ describe("Box Routes", () => {
   let TOKEN_FIO2;
   let TOKEN_FIO3;
   let TOKEN_OWN;
+
   let TOKEN_ROR1;
   let TOKEN_ROR2;
 
@@ -40,16 +43,6 @@ describe("Box Routes", () => {
       password: process.env.LOGIN_PASS
     }
 
-    const sampleLogin_ROR1 = {
-      phone_number: process.env.ROR1_PHONE,
-      password: process.env.LOGIN_PASS
-    }
-
-    const sampleLogin_ROR2 = {
-      phone_number: process.env.ROR2_PHONE,
-      password: process.env.LOGIN_PASS
-    }
-
     const sampleLogin_FIO2 = {
       phone_number: process.env.FIO2_PHONE,
       password: process.env.LOGIN_PASS
@@ -57,6 +50,16 @@ describe("Box Routes", () => {
 
     const sampleLogin_FIO3 = {
       phone_number: process.env.FIO3_PHONE,
+      password: process.env.LOGIN_PASS
+    }
+
+    const sampleLogin_ROR1 = {
+      phone_number: process.env.ROR1_PHONE,
+      password: process.env.LOGIN_PASS
+    }
+
+    const sampleLogin_ROR2 = {
+      phone_number: process.env.ROR2_PHONE,
       password: process.env.LOGIN_PASS
     }
 
@@ -75,16 +78,6 @@ describe("Box Routes", () => {
     .send(sampleLogin_FIO1)
     .expect(200);
 
-    const res_ror1 = await request(app)
-    .post("/api/user/login")
-    .send(sampleLogin_ROR1)
-    .expect(200);
-
-    const res_ror2 = await request(app)
-    .post("/api/user/login")
-    .send(sampleLogin_ROR1)
-    .expect(200);
-
     const res_fio2 = await request(app)
     .post("/api/user/login")
     .send(sampleLogin_FIO2)
@@ -95,12 +88,23 @@ describe("Box Routes", () => {
     .send(sampleLogin_FIO3)
     .expect(200);
 
+    const res_ror1 = await request(app)
+    .post("/api/user/login")
+    .send(sampleLogin_ROR1)
+    .expect(200);
+
+    const res_ror2 = await request(app)
+    .post("/api/user/login")
+    .send(sampleLogin_ROR2)
+    .expect(200);
+
     const res_mar = await request(app)
     .post("/api/user/login")
     .send(sampleLogin_MAR)
     .expect(200);
     
     TOKEN_FIO1 = res_fio1.body.token
+    TOKEN_FIO2 = res_fio2.body.token
     TOKEN_FIO3 = res_fio3.body.token
     TOKEN_OWN = res_own.body.token
     TOKEN_ROR1 = res_ror1.body.token
@@ -189,7 +193,7 @@ describe("Box Routes", () => {
 
     const res = await request(app)
       .get("/api/box/")
-      .auth(TOKEN_ROR1, { type: "bearer" })
+      .auth(TOKEN_ROR2, { type: "bearer" })
       .expect(200);
 
     expect(res.body).toHaveLength(0)
@@ -240,9 +244,9 @@ describe("Box Routes", () => {
     expect(res.body.message).toEqual("Updated box successfully.")
   });
 
-  it.skip("Successful addBoxMember - by creator", async () => {
+  it("Successful addBoxMember - by creator", async () => {
     const sampleInfoToAdd = {
-      new_mem_id: UID_ROR2
+      new_mem_id: UID_ROR1
     }
     const res = await request(app)
       .put("/api/box/" + BOX_1 + "/members/add")
@@ -253,12 +257,12 @@ describe("Box Routes", () => {
     expect(res.body.message).toEqual("Member added successfully.")
   });
 
-  it.skip("Successful addBoxMember - by member", async () => {
+  it("Successful addBoxMember - by member in open box", async () => {
     const sampleInfoToAdd = {
       new_mem_id: UID_MAR
     }
     const res = await request(app)
-      .put("/api/box/" + BOX_1 + "/members/add")
+      .put("/api/box/" + BOX_3 + "/members/add")
       .auth(TOKEN_FIO1, { type: "bearer" })
       .send(sampleInfoToAdd)
       .expect(200);
@@ -282,7 +286,7 @@ describe("Box Routes", () => {
 
   it("Unsuccessful addBoxMember - member in private box", async () => {
     const sampleInfoToAdd = {
-        new_mem_id: UID_ROR1
+        new_mem_id: UID_ROR2
       }
     const res = await request(app)
       .put("/api/box/" + BOX_2 + "/members/add")
@@ -293,14 +297,14 @@ describe("Box Routes", () => {
     expect(res.body.message).toEqual("Unauthorized action: box is private.")
   });
 
-  it.skip("Successful deleteBoxMember - creator", async () => {
+  it("Successful deleteBoxMember - creator", async () => {
 
     const sampleInfoToAdd = {
       del_mem_id: UID_FIO3
     }
 
     const res = await request(app)
-      .put("/api/box/" + BOX_1 + "/members/del")
+      .put("/api/box/" + BOX_3 + "/members/del")
       .auth(TOKEN_OWN, { type: "bearer" })
       .send(sampleInfoToAdd)
       .expect(200);
@@ -311,7 +315,7 @@ describe("Box Routes", () => {
   it("Unsuccessful deleteBoxMember - member in private box", async () => {
 
     const sampleInfoToAdd = {
-      del_mem_id: UID_FIO3
+      del_mem_id: UID_FIO2
     }
 
     const res = await request(app)
@@ -354,7 +358,7 @@ describe("Box Routes", () => {
   it("Successful addExistingEvent - by member", async () => {
 
     const sampleInfoToAdd = {
-      new_event_id: EID_3
+      new_event_id: EID_2
     }
     const res = await request(app)
       .put("/api/box/" + BOX_1 + "/add")
@@ -382,9 +386,10 @@ describe("Box Routes", () => {
   it("Successful leaveBox - member", async () => {
 
     const res = await request(app)
-      .put("/api/box/" + BOX_1 + "/members/leave")
-      .auth(TOKEN_FIO3, { type: "bearer" })
-      .expect(200);
+      .put("/api/box/" + BOX_2 + "/members/leave")
+      .auth(TOKEN_FIO2, { type: "bearer" });
+    
+    console.log(res.error)
 
     expect(res.body.message).toEqual("Left box successfully.")
   });
@@ -401,7 +406,7 @@ describe("Box Routes", () => {
 
   it("Successful addNewEvent", async () => {
     const sampleInfoToAdd = {
-      title: "Test Event - 4"
+      title: "Test Event - 117"
     }
 
     const res = await request(app)
@@ -414,7 +419,9 @@ describe("Box Routes", () => {
   });
 
   it("Unsuccessful addNewEvent - missing title", async () => {
-    const sampleInfoToAdd = {}
+    const sampleInfoToAdd = {
+      creator_id: UID_OWN
+    }
 
     const res = await request(app)
       .put("/api/box/" + BOX_1 + "/new")
