@@ -23,7 +23,7 @@ export const authenticateMiddleware = async (request: AuthRequest, response: Res
         if (mongoose.Types.ObjectId.isValid(_id)) {
             userExists = await User.findById({ 
                 _id: _id
-            })
+            }).select('-updatedAt -__v -password')
         }
 
         if (userExists._id) {

@@ -22,11 +22,10 @@ export const getAllFriends = async (request: AuthRequest, response: Response) =>
             path: 'friend_id',
             select: 'username firstName lastName _id'
         })
-
-
-        if (!friends) {
-            return response.status(404).send("User friends not found.")
-        }
+        .select('-updatedAt -__v')
+        .sort({
+            createdAt: 1
+        })
 
         return response.status(200).send(friends)
     } catch (error) {
@@ -38,19 +37,19 @@ export const getAllFriends = async (request: AuthRequest, response: Response) =>
 export const getFriendByUserId = async (request: AuthRequest, response: Response) => {
     try {
         const { user } = request
-        const { friend_id } = request.params
+        const { mem_id } = request.params
 
         const friend = await Friend.find({
             $or: [
                 {
                     $and: [
                     { user_id: user },
-                    { friend_id: friend_id}
+                    { friend_id: mem_id}
                     ]
                 },
                 {
                     $and: [
-                    { user_id: friend_id },
+                    { user_id: mem_id },
                     { friend_id: user }
                     ]
                 }
@@ -63,10 +62,6 @@ export const getFriendByUserId = async (request: AuthRequest, response: Response
             path: 'friend_id',
             select: 'username firstName lastName _id'
         })
-
-        if (!friend) {
-            return response.status(404).send({ message: "Friend not found." })
-        }
 
         return response.status(200).send(friend)
     } catch (error) {
@@ -97,10 +92,6 @@ export const getFriendByFriendshipId = async (request: AuthRequest, response: Re
             path: 'friend_id',
             select: 'username firstName lastName _id'
         })
-
-        if (!friend) {
-            return response.status(404).send({ message: "Friend not found." })
-        }
 
         return response.status(200).send(friend)
     } catch (error) {
@@ -214,11 +205,8 @@ export const deleteFriendByFriendshipId = async (request: AuthRequest, response:
         }
         )
 
-        if (result.deletedCount == 1) {
-            return response.send({ message: "Friend removed successfully." })
-        }
+        return response.send({ message: "Friend removed successfully." })
 
-        return response.status(404).send({ message: "Friend not found." })
     } catch (error) {
         console.log("error in deleteFriendByFriendshipId ", error)
         throw error
@@ -228,31 +216,27 @@ export const deleteFriendByFriendshipId = async (request: AuthRequest, response:
 export const deleteFriendByUserId = async (request: AuthRequest, response: Response) => {
     try {
         const { user } = request
-        const { friend_id } = request.params
+        const { mem_id } = request.params
 
         const result = await Friend.deleteOne({
             $or: [
                 {
                     $and: [
                         { user_id: user },
-                        { friend_id: friend_id}
+                        { friend_id: mem_id}
                     ]
                 },
                 {
                     $and: [
-                        { user_id: friend_id },
+                        { user_id: mem_id },
                         { friend_id: user}
                     ] 
                 }
             ]
         })
 
+        return response.send({ message: "Friend removed successfully." })
 
-        if (result.deletedCount == 1) {
-            return response.send({ message: "Friend removed successfully." })
-        }
-
-        return response.status(404).send({ message: "Friend not found." })
     } catch (error) {
         console.log("error in deleteFriendByUserId ", error)
         throw error

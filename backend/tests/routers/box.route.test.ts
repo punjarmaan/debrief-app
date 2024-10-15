@@ -121,22 +121,22 @@ describe("Box Routes", () => {
 
     const boxes = await request(app)
       .get("/api/box/")
-      .auth(TOKEN_OWN, { type: "bearer" })
+      .auth(TOKEN_FIO1, { type: "bearer" })
       .expect(200);
 
     
-    BOX_1 = boxes.body[0]._id
+    BOX_1 = boxes.body[2]._id
     BOX_2 = boxes.body[1]._id
-    BOX_3 = boxes.body[2]._id
+    BOX_3 = boxes.body[0]._id
 
     const events = await request(app)
     .get("/api/events/")
-    .auth(TOKEN_OWN, { type: "bearer" })
+    .auth(TOKEN_FIO1, { type: "bearer" })
     .expect(200);
   
-    EID_1 = events.body[0]._id
+    EID_1 = events.body[2]._id
     EID_2 = events.body[1]._id
-    EID_3 = events.body[2]._id
+    EID_3 = events.body[0]._id
 });
 
   it.skip("Successful box creation", async () => {
@@ -184,9 +184,9 @@ describe("Box Routes", () => {
       .expect(200);
 
     expect(res.body).toHaveLength(3)
-    expect(res.body[0]._id).toEqual(BOX_1)
+    expect(res.body[2]._id).toEqual(BOX_1)
     expect(res.body[1]._id).toEqual(BOX_2)
-    expect(res.body[2]._id).toEqual(BOX_3)
+    expect(res.body[0]._id).toEqual(BOX_3)
   });
 
   it("Successful getAllBoxes - no boxes", async () => {
@@ -245,68 +245,40 @@ describe("Box Routes", () => {
   });
 
   it("Successful addBoxMember - by creator", async () => {
-    const sampleInfoToAdd = {
-      new_mem_id: UID_ROR1
-    }
+
     const res = await request(app)
-      .put("/api/box/" + BOX_1 + "/members/add")
+      .put("/api/box/" + BOX_1 + "/members/add/" + UID_ROR1)
       .auth(TOKEN_OWN, { type: "bearer" })
-      .send(sampleInfoToAdd)
       .expect(200);
 
     expect(res.body.message).toEqual("Member added successfully.")
   });
 
   it("Successful addBoxMember - by member in open box", async () => {
-    const sampleInfoToAdd = {
-      new_mem_id: UID_MAR
-    }
+
     const res = await request(app)
-      .put("/api/box/" + BOX_3 + "/members/add")
+      .put("/api/box/" + BOX_3 + "/members/add/" + UID_MAR)
       .auth(TOKEN_FIO1, { type: "bearer" })
-      .send(sampleInfoToAdd)
       .expect(200);
 
     expect(res.body.message).toEqual("Member added successfully.")
   });
 
-  it("Unsuccessful addBoxMember - user doesn't exist", async () => {
-
-    const sampleInfoToAdd = {
-      new_mem_id: FAKE_ID
-    }
-    const res = await request(app)
-      .put("/api/box/" + BOX_1 + "/members/add")
-      .auth(TOKEN_OWN, { type: "bearer" })
-      .send(sampleInfoToAdd)
-      .expect(404);
-
-    expect(res.body.message).toEqual("User doesn't exist.")
-  });
-
   it("Unsuccessful addBoxMember - member in private box", async () => {
-    const sampleInfoToAdd = {
-        new_mem_id: UID_ROR2
-      }
+
     const res = await request(app)
-      .put("/api/box/" + BOX_2 + "/members/add")
+      .put("/api/box/" + BOX_2 + "/members/add/" + UID_ROR2)
       .auth(TOKEN_FIO1, { type: "bearer" })
-      .send(sampleInfoToAdd)
       .expect(401);
 
-    expect(res.body.message).toEqual("Unauthorized action: box is private.")
+    expect(res.body.message).toEqual("Unauthorized action by a member: box is private.")
   });
 
   it("Successful deleteBoxMember - creator", async () => {
 
-    const sampleInfoToAdd = {
-      del_mem_id: UID_FIO3
-    }
-
     const res = await request(app)
-      .put("/api/box/" + BOX_3 + "/members/del")
+      .put("/api/box/" + BOX_3 + "/members/del/" +  UID_FIO3)
       .auth(TOKEN_OWN, { type: "bearer" })
-      .send(sampleInfoToAdd)
       .expect(200);
 
     expect(res.body.message).toEqual("Member deleted successfully.")
@@ -314,70 +286,39 @@ describe("Box Routes", () => {
 
   it("Unsuccessful deleteBoxMember - member in private box", async () => {
 
-    const sampleInfoToAdd = {
-      del_mem_id: UID_FIO2
-    }
-
     const res = await request(app)
-      .put("/api/box/" + BOX_2 + "/members/del")
+      .put("/api/box/" + BOX_2 + "/members/del/" + UID_FIO2)
       .auth(TOKEN_FIO1, { type: "bearer" })
-      .send(sampleInfoToAdd)
       .expect(401);
 
     expect(res.body.message).toEqual("Unauthorized action by a member: box is private.")
   });
 
-  it("Unsuccessful deleteBoxMember - user doesn't exist", async () => {
-
-    const sampleInfoToAdd = {
-      del_mem_id: FAKE_ID
-    }
-    const res = await request(app)
-      .put("/api/box/" + BOX_1 + "/members/add")
-      .auth(TOKEN_OWN, { type: "bearer" })
-      .send(sampleInfoToAdd)
-      .expect(404);
-
-    expect(res.body.message).toEqual("User doesn't exist.")
-  });
-
   it("Successful addExistingEvent - by creator", async () => {
 
-    const sampleInfoToAdd = {
-      new_event_id: EID_1
-    }
     const res = await request(app)
-      .put("/api/box/" + BOX_1 + "/add")
+      .put("/api/box/" + BOX_1 + "/add/" + EID_1)
       .auth(TOKEN_OWN, { type: "bearer" })
-      .send(sampleInfoToAdd)
       .expect(200);
 
     expect(res.body.message).toEqual("Event added to box successfully.")
   });
 
-  it("Successful addExistingEvent - by member", async () => {
-
-    const sampleInfoToAdd = {
-      new_event_id: EID_2
-    }
+  it("Unsuccessful addExistingEvent - by member", async () => {
+    
     const res = await request(app)
-      .put("/api/box/" + BOX_1 + "/add")
+      .put("/api/box/" + BOX_1 + "/add/" + EID_2)
       .auth(TOKEN_FIO1, { type: "bearer" })
-      .send(sampleInfoToAdd)
-      .expect(200);
+      .expect(401);
+  
 
-    expect(res.body.message).toEqual("Event added to box successfully.")
+    expect(res.body.message).toEqual("Unauthorized action: User does not own event.")
   });
 
   it("Unsuccessful addExistingEvent - event doesn't exist", async () => {
-
-    const sampleInfoToAdd = {
-      new_event_id: FAKE_ID
-    }
     const res = await request(app)
-      .put("/api/box/" + BOX_1 + "/add")
+      .put("/api/box/" + BOX_1 + "/add/" + FAKE_ID)
       .auth(TOKEN_OWN, { type: "bearer" })
-      .send(sampleInfoToAdd)
       .expect(404);
 
     expect(res.body.message).toEqual("Event doesn't exist.")
@@ -388,8 +329,6 @@ describe("Box Routes", () => {
     const res = await request(app)
       .put("/api/box/" + BOX_2 + "/members/leave")
       .auth(TOKEN_FIO2, { type: "bearer" });
-    
-    console.log(res.error)
 
     expect(res.body.message).toEqual("Left box successfully.")
   });

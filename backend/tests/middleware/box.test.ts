@@ -71,7 +71,7 @@ describe("Box Routes MiddleWare", () => {
 
     const boxes = await request(app)
     .get("/api/box/")
-    .auth(TOKEN_OWN, { type: "bearer" })
+    .auth(TOKEN_FIO1, { type: "bearer" })
     .expect(200);
   
     BOX_1 = boxes.body[0]._id

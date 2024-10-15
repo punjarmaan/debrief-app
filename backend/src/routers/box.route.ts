@@ -2,6 +2,7 @@ import express from "express";
 import { authenticateMiddleware } from "../middleware/auth";
 import { boxRequestMiddleware, boxCreatorMiddleware } from "../middleware/box";
 import { addBoxMember, createBox, deleteBox, getAllBoxes, getBoxById, updateBox, addNewEvent, deleteBoxMember, addExistingEvent, leaveBox } from "../controllers/box.controller";
+import { userMiddleware } from "../middleware/user";
 
 const boxRoutes = express.Router()
 
@@ -14,11 +15,11 @@ boxRoutes.route("/:box_id").put(boxRequestMiddleware, updateBox)
 
 boxRoutes.route("/:box_id").get(boxRequestMiddleware, getBoxById)
 boxRoutes.route("/:box_id").delete(boxRequestMiddleware, boxCreatorMiddleware, deleteBox)
-boxRoutes.route("/:box_id/add").put(boxRequestMiddleware, addExistingEvent)
+boxRoutes.route("/:box_id/add/:event_id").put(boxRequestMiddleware, addExistingEvent)
 boxRoutes.route("/:box_id/new").put(boxRequestMiddleware, addNewEvent)
 
-boxRoutes.route("/:box_id/members/add").put(boxRequestMiddleware, addBoxMember)
-boxRoutes.route("/:box_id/members/del").put(boxRequestMiddleware, deleteBoxMember)
+boxRoutes.route("/:box_id/members/add/:mem_id").put(boxRequestMiddleware, userMiddleware, addBoxMember)
+boxRoutes.route("/:box_id/members/del/:mem_id").put(boxRequestMiddleware, userMiddleware, deleteBoxMember)
 boxRoutes.route("/:box_id/members/leave").put(boxRequestMiddleware, leaveBox)
 
 

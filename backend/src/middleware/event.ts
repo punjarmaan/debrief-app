@@ -3,23 +3,11 @@ import { AuthRequest } from './auth';
 import Event from "../models/event.model";
 import { EventRole } from '../types/event.enum';
 import idValidation from './id';
+import { ObjectId } from 'mongodb';
 
 export interface AuthEventRequest extends AuthRequest {
     role: EventRole
 }
-
-// const eventValidation = async (event_id: string) => {
-//     try {
-//         if (mongoose.Types.ObjectId.isValid(event_id)) {
-//             return await Event.findById(event_id);
-//         } else {
-//             return null
-//         }
-//     } catch (error) {
-//         console.log("error in eventValidation ", error)
-//         throw error
-//     }
-// }
 
 export const eventRequestMiddleware = async (request: AuthEventRequest, response: Response, next: NextFunction) => {
     try {
@@ -28,14 +16,24 @@ export const eventRequestMiddleware = async (request: AuthEventRequest, response
         const { user } = request
 
         const event = await idValidation(event_id, Event)
+
         
         if (event) {
             const is_creator = event.creator_id.toString() == user
-            const is_member = event.members.some(id => id.toString() == user)
+            var is_member = false
+
+
+            for (let member of event.members) {
+
+                if (member.toString() == user) {
+                    is_member = true
+                    break
+                }
+            }
 
             if (is_creator) {
                 request.role = EventRole.CREATOR
-            } else if(is_member) {
+            } else if (is_member) {
                 request.role = EventRole.MEMBER
             } else {
                 return response.status(401).send({
@@ -62,7 +60,7 @@ export const eventCreatorMiddleware = async (request: AuthEventRequest, response
             next()
         } else {
             return response.status(401).send({
-                message: "Unauthorized action: user does not own event."
+                error: "Unauthorized action: user does not own event."
             })
         }
 

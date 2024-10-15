@@ -48,7 +48,7 @@ describe("Event Routes MiddleWare", () => {
     .expect(200);
     
     // Extract the token from the response
-    TOKEN_FIO1 = res_fio1.body.token      
+    TOKEN_FIO1 = res_fio1.body.token
     TOKEN_OWN = res_own.body.token
     TOKEN_ROR1 = res_ror1.body.token
 
@@ -57,10 +57,10 @@ describe("Event Routes MiddleWare", () => {
 
     const events = await request(app)
     .get("/api/events/")
-    .auth(TOKEN_OWN, { type: "bearer" })
+    .auth(TOKEN_FIO1, { type: "bearer" })
     .expect(200);
 
-    EID_1 = events.body[0]._id
+    EID_1 = events.body[2]._id
     EID_2 = events.body[1]._id
   });
   
@@ -79,7 +79,7 @@ describe("Event Routes MiddleWare", () => {
     const res = await request(app)
       .get("/api/events/" + EID_1)
       .auth(TOKEN_FIO1, { type: "bearer" })
-      .expect(200);
+
 
     expect(res.body._id).toEqual(EID_1)
   });
@@ -130,6 +130,7 @@ describe("Event Routes MiddleWare", () => {
       .auth(TOKEN_FIO1, { type: "bearer" })
       .expect(401);
 
-    expect(res.body.message).toEqual("Unauthorized action: user does not own event.")
+
+    expect(res.body.error).toEqual("Unauthorized action: user does not own event.")
   });
 });

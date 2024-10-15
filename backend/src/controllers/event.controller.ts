@@ -12,11 +12,16 @@ export const getAllEvents = async (request: AuthRequest, response: Response) => 
         const { user } = request
         const events = await Event.find({
             members: user
-        }).select('-createdAt -updatedAt -__v')
+        }).populate({
+            path: 'creator_id',
+            select: 'username firstName lastName _id'
+        }).populate({
+            path: 'members',
+            select: '_id username firstName lastName'
+        }).sort({
+            createdAt: -1
+        }).select('-updatedAt -__v')
 
-        if (!events) {
-            return response.status(404).send("Error finding events.")
-        }
         return response.status(200).send(events)
     } catch (error) {
         console.log("error in getAllEvents ", error)
@@ -27,43 +32,47 @@ export const getAllEvents = async (request: AuthRequest, response: Response) => 
 export const getLockedEvents = async (request: AuthRequest, response: Response) => {
     try {
         const { user } = request
-        const boxes = await Event.find({
+        const events = await Event.find({
             locked: true,
-            members: user 
-        })
-        .populate({
-            path: 'events',
-            select: 'title'
-        })
+            members: user
+        }).populate({
+            path: 'creator_id',
+            select: 'username firstName lastName _id'
+        }).populate({
+            path: 'members',
+            select: '_id username firstName lastName'
+        }).sort({
+            createdAt: -1
+        }).select('-updatedAt -__v')
 
-        if (!boxes) {
-            return response.status(404).send("Error finding boxes.")
-        }
-        return response.status(200).send(boxes)
+        return response.status(200).send(events)
     } catch (error) {
-        console.log("error in getAllBoxes\n", error)
+        console.log("error in getLockedEvents\n", error)
         throw error
     }
 }
 
-export const getOpenEvents = async (request: AuthRequest, response: Response) => {
+export const getUnlockedEvents = async (request: AuthRequest, response: Response) => {
     try {
         const { user } = request
-        const boxes = await Event.find({
+
+        const events = await Event.find({
             locked: false,
             members: user
         })
         .populate({
-            path: 'events',
-            select: 'title'
-        })
+            path: 'creator_id',
+            select: 'username firstName lastName _id'
+        }).populate({
+            path: 'members',
+            select: '_id username firstName lastName'
+        }).sort({
+            createdAt: -1
+        }).select('-updatedAt -__v')
 
-        if (!boxes) {
-            return response.status(404).send("Error finding boxes.")
-        }
-        return response.status(200).send(boxes)
+        return response.status(200).send(events)
     } catch (error) {
-        console.log("error in getAllBoxes\n", error)
+        console.log("error in getUnlockedEvents\n", error)
         throw error
     }
 }
@@ -82,7 +91,7 @@ export const getEventById = async (request: AuthEventRequest, response: Response
         }).populate({
             path: 'members',
             select: 'username firstName lastName _id'
-        }).select('-createdAt -updatedAt -__v')
+        }).select('-updatedAt -__v')
 
         return response.status(200).send(event)
     } catch (error) {
@@ -106,12 +115,7 @@ export const createEvent = async (request: AuthEventRequest, response: Response)
             members: [user]
         })
 
-        if (event) {
-            return response.status(200).send(event)  
-        }
-        
-        return response.status(401).send("Error creating event.")
-
+        return response.status(200).send(event)  
     } catch (error) {
         console.log("error in createEvent ", error)
         throw error
@@ -121,23 +125,17 @@ export const createEvent = async (request: AuthEventRequest, response: Response)
 export const deleteEvent = async (request: AuthEventRequest, response: Response) => {
     try {
         const { event_id } = request.params
-        const { user } = request
-        const { role } = request
+        const { user, role } = request
 
-        if (role == EventRole.CREATOR) {
-            const result = await Event.deleteOne({
-                _id: event_id
-            })
-
-            if (result.deletedCount == 1) {
-                return response.status(200).send({ message: "Event deleted by creator."})
-            }
-
-        } else if (role == EventRole.MEMBER) {
+        if (role != EventRole.CREATOR) {
             return response.status(401).send({ message: "Unauthorized action: user does not own event." })
         }
 
-        return response.status(401).send({ message: "Error deleting event." })
+        const result = await Event.deleteOne({
+            _id: event_id
+        })
+
+        return response.status(200).send({ message: "Event deleted by creator."})
 
     } catch (error) {
         console.log("error in deleteEvent ", error)
@@ -161,11 +159,8 @@ export const updateEvent = async (request: AuthEventRequest, response: Response)
             }
         })
     
-        if (result.modifiedCount == 1) {
-            return response.status(200).send({ message: "Updated event successfully." })
-        }
+        return response.status(200).send({ message: "Updated event successfully." })
 
-        return response.send({ message: "Error updating event." })
     } catch (error) {
         console.log("error in updateEvent ", error)
         throw error
@@ -186,11 +181,7 @@ export const unlockEvent = async (request: AuthEventRequest, response: Response)
             }
         })
     
-        if (result.modifiedCount == 1) {
-            return response.status(200).send({ message: "Unlocked event successfully." })
-        }
-
-        return response.send({ message: "Error unlocking event." })
+        return response.status(200).send({ message: "Unlocked event successfully." })
     } catch (error) {
         console.log("error in unlockEvent ", error)
         throw error
@@ -211,28 +202,19 @@ export const unlockEvent = async (request: AuthEventRequest, response: Response)
 export const addEventMember = async (request: AuthEventRequest, response: Response) => {
     try {
         const { user } = request
-        const { event_id } = request.params
-        const { new_mem_id } = request.body
-
-        const new_mem_exists = await User.findById(new_mem_id)
-
-        if (!new_mem_exists) {
-            return response.status(404).send({ message: "Member doesn't exist." })
-        }
+        const { event_id, mem_id } = request.params
 
         const result = await Event.updateOne({ 
                 _id: event_id 
             },
             {
                 $push: {
-                    members: new_mem_id
+                    members: mem_id
                 }
         })
         
 
-        if (result.modifiedCount == 1) {
-            return response.status(200).send({ message: "Member added successfully." })
-        }
+        return response.status(200).send({ message: "Member added successfully." })
         
     } catch (error) {
         console.log("error in addEventMember ", error)
@@ -242,30 +224,24 @@ export const addEventMember = async (request: AuthEventRequest, response: Respon
 
 export const deleteEventMember = async (request: AuthEventRequest, response: Response) => {
     try {
-        const { user } = request
-        const { event_id } = request.params
-        const { del_mem_id } = request.body
-        const { role } = request
+        const { user, role } = request
+        const { event_id, mem_id } = request.params
 
 
-        if (role != EventRole.CREATOR) {
-            return response.status(401).send({ message: "Unauthorized action: User does not own event." })
-        }
+        // if (role != EventRole.CREATOR) {
+        //     return response.status(401).send({ message: "Unauthorized action: User does not own event." })
+        // }
 
         const result = await Event.updateOne({ 
                 _id: event_id,
             },
             {
                 $pull: {
-                    members: del_mem_id
+                    members: mem_id
                 }
         })
 
-        if (result.modifiedCount == 1) {
-            return response.status(200).send({ message: "Member deleted successfully." })
-        } 
-    
-        return response.status(401).send({ message: "Error deleting event member." })
+        return response.status(200).send({ message: "Member deleted successfully." });
 
     } catch (error) {
         console.log("error in deleteEventMember ", error)
@@ -292,23 +268,10 @@ export const leaveEvent = async (request: AuthEventRequest, response: Response) 
             }
         })
 
-        if (result.modifiedCount == 1) {
-            return response.status(200).send({ message: "Left event successfully." })
-        } 
-    
-        return response.status(401).send({ message: "Error leaving event." })
+        return response.status(200).send({ message: "Left event successfully." })
 
     } catch (error) {
         console.log("error in leaveEvent ", error)
         throw error
     }
 }
-
-// export const getAllEvents = async (request: AuthEventRequest, response: Response) => {
-//     try {
-
-//     } catch (error) {
-//         console.log("error in getAllEvents ", error)
-//         throw error
-//     }
-// }

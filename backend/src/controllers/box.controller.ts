@@ -6,6 +6,7 @@ import { AuthBoxRequest } from "../middleware/box";
 import User from "../models/user.model";
 import Event from "../models/event.model"
 import mongoose from "mongoose";
+import idValidation from "../middleware/id";
 
 export const getAllBoxes = async (request: AuthBoxRequest, response: Response) => {
     try {
@@ -13,15 +14,14 @@ export const getAllBoxes = async (request: AuthBoxRequest, response: Response) =
         const boxes = await Box.find({
             members: user
         })
-        .select('-updatedAt -__v')
+        .select('-__v')
         .populate({
             path: 'events',
             select: 'title creator_id images members createdAt'
         })
-
-        if (!boxes) {
-            return response.status(404).send({ message: "Error finding boxes." })
-        }
+        .sort({
+            updatedAt: -1
+        })
 
         return response.status(200).send(boxes)
     } catch (error) {
@@ -42,65 +42,13 @@ export const getBoxById = async (request: AuthBoxRequest, response: Response) =>
             select: 'title creator_id images members createdAt'
         })
 
-        if (box) {
-            return response.status(200).send(box)  
-        } 
-        
-        return response.status(401).send("Box doesn't exist.")
+        return response.status(200).send(box)  
+
     } catch (error) {
         console.log("error in getBoxById ", error)
         throw error
     }
 }
-
-// export const unlockBoxById = async (request: AuthBoxRequest, response: Response) => {
-//     try {
-//         const { user } = request
-//         const { box_id } = request.params
-
-//         const box = await Box.findOneAndUpdate({
-//             _id: box_id
-//         },
-//         {
-//             $set: {
-//                 locked: false
-//             }
-//         })
-
-//         if (box) {
-//             return response.status(200).send(box)  
-//         }
-        
-//         return response.status(401).send("Box doesn't exist.")
-//     } catch (error) {
-//         console.log("error in unlockBoxById ", error)
-//         throw error
-//     }
-// }
-
-
-// export const getEventsByBoxId = async (request: AuthBoxRequest, response: Response) => {
-//     try {
-//         const { user } = request
-//         const { box_id } = request.params
-
-//         const box = await Box.findById({
-//             box_id
-//         }).populate({
-//             path: 'events',
-//             select: 'title images members'
-//         })
-
-//         if (box) {
-//             return response.status(200).send(box)  
-//         }
-        
-//         return response.status(401).send("Box doesn't exist.")
-//     } catch (error) {
-//         console.log("error in getBoxById ", error)
-//         throw error
-//     }
-// }
 
 export const createBox = async (request: AuthBoxRequest, response: Response) => {
     try {
@@ -119,11 +67,7 @@ export const createBox = async (request: AuthBoxRequest, response: Response) => 
             private: is_private
         })
 
-        if (box) {
-            return response.status(200).send(box)  
-        }
-        
-        return response.status(400).send("Error creating box.")
+        return response.status(200).send(box)  
 
     } catch (error) {
         console.log("error in createBox ", error)
@@ -140,9 +84,7 @@ export const deleteBox = async (request: AuthBoxRequest, response: Response) => 
             _id: box_id
         })
 
-        if (result.deletedCount == 1) {
-            return response.status(200).send({ message: "Box deleted by creator."})
-        }
+        return response.status(200).send({ message: "Box deleted by creator."})
 
     } catch (error) {
         console.log("error in deleteBox ", error)
@@ -164,12 +106,8 @@ export const updateBox = async (request: AuthBoxRequest, response: Response) => 
             title,
             private: is_private
          }})
-
-        if (result.modifiedCount == 1) {
-            return response.status(200).send({ message: "Updated box successfully." })
-        }
         
-        return response.send({ message: "Error updating box." })
+         return response.status(200).send({ message: "Updated box successfully." })
     } catch (error) {
         console.log("error in updatebox ", error)
         throw error
@@ -180,21 +118,11 @@ export const addBoxMember = async (request: AuthBoxRequest, response: Response) 
     try {
 
         const { user, role } = request
-        const { box_id } = request.params
-        const { new_mem_id } = request.body
+        const { box_id, mem_id } = request.params
         const is_private = await (await Box.findById(box_id)).private
-        let new_mem_exists;
 
         if (is_private && role != BoxRole.CREATOR) {
-            return response.status(401).send({ message: "Unauthorized action: box is private." })
-        }
-
-        if (mongoose.Types.ObjectId.isValid(new_mem_id)) {
-            new_mem_exists = await User.findById(new_mem_id)
-        }
-
-        if (!new_mem_exists || new_mem_exists.id == null) {
-            return response.status(404).send({ message: "User doesn't exist." })
+            return response.status(401).send({ message: "Unauthorized action by a member: box is private." })
         }
         
         const result = await Box.updateOne(
@@ -203,16 +131,13 @@ export const addBoxMember = async (request: AuthBoxRequest, response: Response) 
             },
             {
                 $push: {
-                    members: new_mem_id
+                    members: mem_id
                 }
         })
         
 
-        if (result.modifiedCount == 1) {
-            return response.send({ message: "Member added successfully."})
-        }
-        
-        return response.send({ message: "Error adding member." })
+        return response.status(200).send({ message: "Member added successfully."})
+
     } catch (error) {
         console.log("error in addboxMember ", error)
         throw error
@@ -222,22 +147,11 @@ export const addBoxMember = async (request: AuthBoxRequest, response: Response) 
 export const deleteBoxMember = async (request: AuthBoxRequest, response: Response) => {
     try {
         const { user, role } = request
-        const { box_id } = request.params
-        const { del_mem_id } = request.body
+        const { box_id, mem_id } = request.params
         const is_private = await (await Box.findById(box_id)).private
-
-        let del_mem_exists;
 
         if (is_private && role != BoxRole.CREATOR) {
             return response.status(401).send({ message: "Unauthorized action by a member: box is private." })
-        }
-
-        if (mongoose.Types.ObjectId.isValid(del_mem_id)) {
-            del_mem_exists = await User.findById(del_mem_id)
-        }
-
-        if (!del_mem_exists || del_mem_exists.id == null) {
-            return response.status(404).send({ message: "User doesn't exist" })
         }
         
         const result = await Box.updateOne({ 
@@ -245,16 +159,11 @@ export const deleteBoxMember = async (request: AuthBoxRequest, response: Respons
             },
             {
                 $pull: {
-                    members: del_mem_id
+                    members: mem_id
                 }
         })
 
-        if (result.modifiedCount == 1) {
-            return response.status(200).send({ message: "Member deleted successfully."})
-        } 
-        
-        return response.send({ message: "Error deleting member" })
-        
+        return response.status(200).send({ message: "Member deleted successfully."})
     } catch (error) {
         console.log("error in deleteboxMember", error)
         throw error
@@ -264,31 +173,26 @@ export const deleteBoxMember = async (request: AuthBoxRequest, response: Respons
 export const addExistingEvent = async (request: AuthBoxRequest, response: Response) => {
     try {
         const { user } = request
-        const { box_id } = request.params
-        const { new_event_id } = request.body
+        const { box_id, event_id } = request.params
 
-        const event_exists = await Event.findById(new_event_id)
+        const event_exists = await idValidation(event_id, Event)
         
-        if (!event_exists) {
-            return response.status(404).send({ message: "Event doesn't exist." })
-        }
+        if (!event_exists) { return response.status(404).send({ message: "Event doesn't exist." }) }
 
-        const result = await Box.updateOne(
-            {
-                _id: box_id
-            },
+        if (event_exists.creator_id != user) { return response.status(401).send({ message: "Unauthorized action: User does not own event." }) }
+
+        const result = await Box.updateOne({
+            _id: box_id
+        },
             {
                 $push: {
-                    events: new_event_id
+                    events: event_id
                 }
         })
         
 
-        if (result.modifiedCount == 1) {
-            return response.status(200).send({ message: "Event added to box successfully."})
-        } 
+        return response.status(200).send({ message: "Event added to box successfully."})
         
-        return response.status(404).send({ message: "Event not found." })
     } catch (error) {
         console.log("error in addExistingEvent ", error)
         throw error
@@ -314,11 +218,7 @@ export const leaveBox = async (request: AuthBoxRequest, response: Response) => {
             }
         })
 
-        if (result.modifiedCount == 1) {
-            return response.status(200).send({ message: "Left box successfully." })
-        } 
-    
-        return response.status(401).send({ message: "Error leaving box." })
+        return response.status(200).send({ message: "Left box successfully." })
 
     } catch (error) {
         console.log("error in leaveBox ", error)
@@ -338,6 +238,7 @@ export const addNewEvent = async (request: AuthBoxRequest, response: Response) =
         const { title }: EventProfile = request.body
 
         if (!title) {
+            await session.abortTransaction();
             return response.status(400).send({ message: "Event title is required." })
         }
 
@@ -373,23 +274,14 @@ export const addNewEvent = async (request: AuthBoxRequest, response: Response) =
             return response.send({ message: "Error while adding event to box."})
         } 
 
-        await session.commitTransaction();
 
-        return response.send({ message: "New event added successfully." })
+        await session.commitTransaction();
+        return response.status(200).send({ message: "New event added successfully." })
+
     } catch (error) {
         await session.abortTransaction();
         console.log("error in addNewEvent\n", error)
     } finally {
         await session.endSession();
     }
-} 
-
-
-// export const getAllboxs = async (request: AuthBoxRequest, response: Response) => {
-//     try {
-
-//     } catch (error) {
-//         console.log("error in getAllEvents ", error)
-//         throw error
-//     }
-// }
+}

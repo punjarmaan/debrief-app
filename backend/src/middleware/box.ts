@@ -8,19 +8,6 @@ export interface AuthBoxRequest extends AuthRequest {
     role: BoxRole
 }
 
-// const boxValidation = async (box_id: string) => {
-//     try {
-//         if (isObjectIdOrHexString(box_id)) {
-//             return await Box.findById(box_id);
-//         } else {
-//             return null
-//         }
-//     } catch (error) {
-//         console.log("error in boxValidation ", error)
-//         throw error
-//     }
-// }
-
 export const boxRequestMiddleware = async (request: AuthBoxRequest, response: Response, next: NextFunction) => {
     try {
 
@@ -31,7 +18,15 @@ export const boxRequestMiddleware = async (request: AuthBoxRequest, response: Re
         
         if (box) {
             const is_creator = box.creator_id.toString() == user
-            const is_member = box.members.some(id => id.toString() == user)
+            var is_member = false
+
+            for (let member of box.members) {
+
+                if (member.toString() == user) {
+                    is_member = true
+                    break
+                }
+            }
 
             if (is_creator) {
                 request.role = BoxRole.CREATOR

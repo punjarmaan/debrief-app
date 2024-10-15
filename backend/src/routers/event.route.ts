@@ -1,7 +1,8 @@
 import express from "express";
-import { getAllEvents, getLockedEvents, getOpenEvents, createEvent, deleteEvent, updateEvent, unlockEvent, addEventMember, getEventById, deleteEventMember, leaveEvent } from "../controllers/event.controller";
+import { getAllEvents, getLockedEvents, getUnlockedEvents, createEvent, deleteEvent, updateEvent, unlockEvent, addEventMember, getEventById, deleteEventMember, leaveEvent } from "../controllers/event.controller";
 import { authenticateMiddleware } from "../middleware/auth";
 import { eventCreatorMiddleware, eventRequestMiddleware } from "../middleware/event";
+import { userMiddleware } from "../middleware/user";
 
 const eventRoutes = express.Router()
 
@@ -10,9 +11,9 @@ eventRoutes.use(authenticateMiddleware)
 
 // Individual event-related routes
 eventRoutes.route("/").get(getAllEvents)
-eventRoutes.route("/").get(getLockedEvents)
-eventRoutes.route("/").get(getOpenEvents)
 eventRoutes.route("/").post(createEvent)
+eventRoutes.route("/locked").get(getLockedEvents)
+eventRoutes.route("/unlocked").get(getUnlockedEvents)
 eventRoutes.route("/:event_id").get(eventRequestMiddleware, getEventById)
 eventRoutes.route("/:event_id").delete(eventRequestMiddleware, eventCreatorMiddleware, deleteEvent)
 eventRoutes.route("/:event_id").put(eventRequestMiddleware, updateEvent)
@@ -23,7 +24,7 @@ eventRoutes.route("/:event_id/leave").put(eventRequestMiddleware, leaveEvent)
 // eventRoutes.route("/test").post(uploadTest)
 
 // Member-event relationship routes
-eventRoutes.route("/:event_id/members/add").put(eventRequestMiddleware, addEventMember)
-eventRoutes.route("/:event_id/members/del").put(eventRequestMiddleware, eventCreatorMiddleware, deleteEventMember)
+eventRoutes.route("/:event_id/members/add/:mem_id").put(eventRequestMiddleware, userMiddleware, addEventMember)
+eventRoutes.route("/:event_id/members/del/:mem_id").put(eventRequestMiddleware, eventCreatorMiddleware, userMiddleware, deleteEventMember)
 
 export default eventRoutes

@@ -1,6 +1,6 @@
 import express from "express";
 import { authenticateMiddleware } from "../middleware/auth";
-import { friendMiddleware } from "../middleware/friend";
+import { userMiddleware } from "../middleware/user";
 import { getAllFriends, getFriendByUserId, getFriendByFriendshipId, deleteFriendByFriendshipId, deleteFriendByUserId } from "../controllers/friend.controller";
 
 const friendRoutes = express.Router()
@@ -14,8 +14,8 @@ friendRoutes.route("/:friendship_id").get(getFriendByFriendshipId)
 friendRoutes.route("/:friendship_id").delete(deleteFriendByFriendshipId)
 
 // friend_id is verified before entering controller function
-friendRoutes.route("/user/:friend_id").get(friendMiddleware, getFriendByUserId)
-friendRoutes.route("/user/:friend_id").delete(friendMiddleware, deleteFriendByUserId)
+friendRoutes.route("/user/:mem_id").get(userMiddleware, getFriendByUserId)
+friendRoutes.route("/user/:mem_id").delete(userMiddleware, deleteFriendByUserId)
 
 
 

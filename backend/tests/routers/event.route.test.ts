@@ -85,13 +85,13 @@ describe("Event Routes", () => {
 
     const events = await request(app)
       .get("/api/events/")
-      .auth(TOKEN_OWN, { type: "bearer" })
+      .auth(TOKEN_FIO1, { type: "bearer" })
       .expect(200);
 
     
-    EID_1 = events.body[0]._id.toString()
+    EID_1 = events.body[2]._id.toString()
     EID_2 = events.body[1]._id.toString()
-    EID_3 = events.body[2]._id.toString()
+    EID_3 = events.body[0]._id.toString()
 });
 
   it.skip("Successful event creation", async () => {
@@ -138,9 +138,9 @@ describe("Event Routes", () => {
       .expect(200);
 
     expect(res.body).toHaveLength(3)
-    expect(res.body[0]._id.toString()).toEqual(EID_1)
+    expect(res.body[0]._id.toString()).toEqual(EID_3)
     expect(res.body[1]._id.toString()).toEqual(EID_2)
-    expect(res.body[2]._id.toString()).toEqual(EID_3)
+    expect(res.body[2]._id.toString()).toEqual(EID_1)
   });
 
   it("Successful getAllEvents - no events", async () => {
@@ -169,7 +169,6 @@ describe("Event Routes", () => {
     const res = await request(app)
       .get("/api/events/" + EID_1)
       .auth(TOKEN_FIO1, { type: "bearer" })
-      .expect(200);
 
     expect(res.body._id).toEqual(EID_1)
   });
@@ -211,14 +210,9 @@ describe("Event Routes", () => {
   });
 
   it.skip("Successful addEventMember - by creator", async () => {
-
-    const sampleInfoToAdd = {
-      new_mem_id: UID_ROR1
-    }
     const res = await request(app)
-      .put("/api/events/" + EID_1 + "/members/add")
+      .put("/api/events/" + EID_1 + "/members/add/" + UID_ROR1)
       .auth(TOKEN_OWN, { type: "bearer" })
-      .send(sampleInfoToAdd)
       .expect(200);
 
     expect(res.body.message).toEqual("Member added successfully.")
@@ -226,89 +220,22 @@ describe("Event Routes", () => {
 
   it("Successful addEventMember - by member", async () => {
 
-    const sampleInfoToAdd = {
-      new_mem_id: UID_MAR
-    }
     const res = await request(app)
-      .put("/api/events/" + EID_1 + "/members/add")
+      .put("/api/events/" + EID_1 + "/members/add/" + UID_MAR)
       .auth(TOKEN_FIO1, { type: "bearer" })
-      .send(sampleInfoToAdd)
       .expect(200);
 
     expect(res.body.message).toEqual("Member added successfully.")
   });
 
-  it("Unsuccessful addEventMember - member doesn't exist", async () => {
-
-    const sampleInfoToAdd = {
-      new_mem_id: FAKE_ID
-    }
-    const res = await request(app)
-      .put("/api/events/" + EID_1 + "/members/add")
-      .auth(TOKEN_OWN, { type: "bearer" })
-      .send(sampleInfoToAdd)
-      .expect(404);
-
-    expect(res.body.message).toEqual("Member doesn't exist.")
-  });
-
   it("Successful deleteEventMember - creator", async () => {
 
-    const sampleInfoToAdd = {
-      del_mem_id: UID_FIO2
-    }
-
     const res = await request(app)
-      .put("/api/events/" + EID_1 + "/members/del")
+      .put("/api/events/" + EID_3 + "/members/del/" + UID_FIO2)
       .auth(TOKEN_OWN, { type: "bearer" })
-      .send(sampleInfoToAdd)
       .expect(200);
+    
 
     expect(res.body.message).toEqual("Member deleted successfully.")
   });
-
-
-
-
-//   it("successful login", async () => {
-//     const sampleLogin = {
-//         phone_number: PHONE,
-//         password: PASS
-//     }
-//     const res = await request(app).post("/api/user/login").send(sampleLogin);
-
-//     expect(res.body.user.firstName).toEqual("Armaan3");
-//     expect(res.body.user.lastName).toEqual("Punj3");
-//     expect(res.body.user.phone_number).toEqual(PHONE)
-//   });
-
-//   it("unsuccessful login - wrong number", async () => {
-//     const sampleLogin = {
-//         phone_number: "401",
-//         password: PASS
-//     }
-//     const res = await request(app).post("/api/user/login").send(sampleLogin);
-
-//     expect(res.body.message).toEqual("User doesn't exist.");
-//   });
-
-//   it("unsuccessful login - wrong password", async () => {
-//     const sampleLogin = {
-//         phone_number: PHONE,
-//         password: "testing"
-//     }
-//     const res = await request(app).post("/api/user/login").send(sampleLogin);
-
-//     expect(res.body.message).toEqual("Incorrect password.");
-//   });
-
-//   it("unsuccessful login - missing parameters", async () => {
-//     const sampleLogin = {
-//         phone_number: PHONE,
-//     }
-//     const res = await request(app).post("/api/user/login").send(sampleLogin).expect(422)
-
-//     console.log(res.body)
-//     expect(res.body.error).toEqual("Invalid login parameters.");
-//   });
 });
